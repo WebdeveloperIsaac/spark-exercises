@@ -6,12 +6,12 @@
 	<artifactId>spark.candy</artifactId>
 	<version>1.0.0</version>
 	<name>Thinking Spark</name>
-	<url>https://github.com/rondiplomatico/spark-with-candycrush</url>
+	<url>https://github.com/rondiplomatico/learn-spark-exercises</url>
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-core_2.12</artifactId>
-			<version>3.1.1</version>
+			<artifactId>spark-sql_2.12</artifactId>
+			<version>3.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>

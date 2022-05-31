@@ -13,7 +13,6 @@ import de.rondiplomatico.spark.candy.base.data.Candy;
 import de.rondiplomatico.spark.candy.base.data.Color;
 import de.rondiplomatico.spark.candy.base.data.Crush;
 import de.rondiplomatico.spark.candy.base.data.Deco;
-import scala.Tuple2;
 
 public class FunctionalProcessing {
 
@@ -22,9 +21,9 @@ public class FunctionalProcessing {
     public static void main(String[] args) {
         List<Crush> data = Generator.generate(1000);
 
-        // Q1_countCrushes(data);
+        Q1_countCrushes(data);
 
-        // Q2_countByColor(data);
+        Q2_countByColor(data);
 
         Q3_countByCity(data);
     }
@@ -61,7 +60,7 @@ public class FunctionalProcessing {
                 res.put(col, count + 1);
             }
         }
-        log.info("The crush data contains {} candies!", res);
+        res.forEach((c, i) -> log.info("The crush data contains {} {} candies", i, c));
 
         /*
          * TODO: Implement the same logic using the streaming api
@@ -71,19 +70,18 @@ public class FunctionalProcessing {
                                     .map(Crush::getCandy)
                                     .collect(Collectors.groupingBy(Candy::getColor, Collectors.counting()));
 
-        log.info("The crush data contains {} candies!", res2);
+        res2.forEach((c, i) -> log.info("The crush data contains {} {} candies", i, c));
 
         /*
          * TODO: Implement the same logic using the streaming api
          * Hints: The function "collect" with the "groupingBy" and downstream "counting" Collectors come in handy.
          */
-        Map<Color, Long> res3 = data.stream()
-                                    .map(Crush::getCandy)
-                                    .filter(c -> c.getDeco().equals(Deco.HSTRIPES) || c.getDeco().equals(Deco.VSTRIPES))
-                                    .collect(Collectors.groupingBy(Candy::getColor, Collectors.counting()));
+        Map<Deco, Long> res3 = data.stream()
+                                   .map(Crush::getCandy)
+                                   .filter(c -> c.getColor().equals(Color.BLUE))
+                                   .collect(Collectors.groupingBy(Candy::getDeco, Collectors.counting()));
 
-        log.info("The crush data contains {} wrapped candies!", res3);
-
+        res3.forEach((c, i) -> log.info("The crush data contains {} {} blue candies", i, c));
     }
 
     public static void Q3_countByCity(List<Crush> data) {
@@ -94,7 +92,7 @@ public class FunctionalProcessing {
                                     .map(c -> cities.get(c.getUser()))
                                     .collect(Collectors.groupingBy(s -> s, Collectors.counting()));
 
-        log.info("The crush data by city: {}", res);
+        res.forEach((c, i) -> log.info("There are {} crushes in {}", i, c));
 
         /*
          * TODO:
@@ -105,7 +103,7 @@ public class FunctionalProcessing {
                                     .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
                                     .collect(Collectors.groupingBy(c -> c.getCandy().getColor(), Collectors.counting()));
 
-        log.info("Crushes in Ismaning between 14-15 o'clock by color: {}", res2);
+        res2.forEach((c, i) -> log.info("There are {} crushes in Ismaning with {} candies", i, c));
     }
 
 }

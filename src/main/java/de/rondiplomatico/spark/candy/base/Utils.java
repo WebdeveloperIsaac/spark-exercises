@@ -1,13 +1,22 @@
 package de.rondiplomatico.spark.candy.base;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalTime;
 import java.time.Month;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.SparkSession.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +79,33 @@ public class Utils {
         }
         log.warn("{} users live in {} places.", homes.size(), CITIES.size());
         return homes;
+    }
+
+    public static JavaSparkContext getSpark() {
+        Builder b = SparkSession.builder();
+        if (!SparkSession.getActiveSession().isDefined()) {
+            b.config(readFromFile("spark.conf"));
+        }
+        return JavaSparkContext.fromSparkContext(b.getOrCreate().sparkContext());
+    }
+
+    private static SparkConf readFromFile(String configFile) {
+        Properties props = new Properties();
+        File in = new File(configFile);
+        if (!in.isAbsolute()) {
+            try (InputStream is = ClassLoader.getSystemResourceAsStream(configFile)) {
+                if (is == null) {
+                    throw new RuntimeException("Resource file " + configFile + " not found on ClassPath");
+                } else {
+                    props.load(is);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed loading config file " + configFile + " from resources", e);
+            }
+        }
+        SparkConf conf = new SparkConf();
+        props.forEach((k, v) -> conf.set((String) k, (String) v));
+        return conf;
     }
 
 }
