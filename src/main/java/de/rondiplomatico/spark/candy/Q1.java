@@ -3,9 +3,9 @@ package de.rondiplomatico.spark.candy;
 import org.apache.spark.api.java.JavaRDD;
 
 import de.rondiplomatico.spark.candy.base.CandyBase;
-import de.rondiplomatico.spark.candy.base.Color;
-import de.rondiplomatico.spark.candy.base.Crush;
-import de.rondiplomatico.spark.candy.base.Deco;
+import de.rondiplomatico.spark.candy.base.data.Color;
+import de.rondiplomatico.spark.candy.base.data.Crush;
+import de.rondiplomatico.spark.candy.base.data.Deco;
 
 /**
  *

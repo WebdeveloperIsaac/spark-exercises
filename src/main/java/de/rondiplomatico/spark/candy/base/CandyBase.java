@@ -10,6 +10,11 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
+import de.rondiplomatico.spark.candy.Generator;
+import de.rondiplomatico.spark.candy.base.data.Candy;
+import de.rondiplomatico.spark.candy.base.data.Color;
+import de.rondiplomatico.spark.candy.base.data.Crush;
+import de.rondiplomatico.spark.candy.base.data.Deco;
 import lombok.Getter;
 import scala.Tuple2;
 
@@ -19,10 +24,6 @@ import scala.Tuple2;
  */
 public class CandyBase {
 
-    @Getter
-    private List<String> places = Arrays.asList("Ismaning", "Cluj", "Tirgu Mures", "Echterdingen");
-    @Getter
-    private List<String> users = Arrays.asList("JonnyCage", "Hans", "Zolti", "RonDiplo", "Rambo", "Tibiko", "Inge", "Tibor");
     /*
      * Create one static instance of a spark context.
      * This is all that is required to start your local spark application!
@@ -44,55 +45,11 @@ public class CandyBase {
         /*
          * Fill a local list with crushes (all in the memory of the spark driver process!)
          */
-        List<Crush> orders = new ArrayList<>(n);
-        for (int o = 0; o < n; o++) {
-            orders.add(new Crush(new Candy(Color.random(), Deco.random()), randUser(), randTime()));
-        }
-        JavaRDD<Crush> res = getSparkContext().parallelize(orders, 50) // Distribute into
+        JavaRDD<Crush> res = getSparkContext().parallelize(Generator.generate(n), 50) // Distribute into
                                               .cache(); // Dont re-compute the test data every time it is used
 
         System.out.println(res.count() + " Candies have been crushed!");
         return res;
-    }
-
-    /**
-     * 
-     * Returns the living places of all candy city citizens
-     *
-     * @return
-     */
-    protected JavaPairRDD<String, String> getLivingPlaces() {
-        List<Tuple2<String, String>> homes = new ArrayList<>();
-        for (String user : getUsers()) {
-            Tuple2<String, String> t = new Tuple2<>(user, randPlace());
-            System.out.println(t._1 + " lives in " + t._2);
-            homes.add(t);
-        }
-        JavaPairRDD<String, String> homeRDD =
-                        getSparkContext().parallelizePairs(homes, getUsers().size() / 2)
-                                         .cache();
-        System.out.println(homeRDD.count() + " users live in " + getPlaces().size() + " places.");
-        return homeRDD;
-    }
-
-    protected int rand(final int max) {
-        return (int) Math.floor(Math.random() * max);
-    }
-
-    protected Month randMonth() {
-        return Month.values()[rand(Month.values().length)];
-    }
-
-    protected String randUser() {
-        return users.get(rand(users.size()));
-    }
-
-    protected String randPlace() {
-        return places.get(rand(places.size()));
-    }
-
-    protected LocalTime randTime() {
-        return LocalTime.of(rand(24), rand(60));
     }
 
 }

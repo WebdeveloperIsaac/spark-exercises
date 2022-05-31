@@ -11,7 +11,8 @@ import org.apache.spark.broadcast.Broadcast;
 import com.google.common.collect.Iterables;
 
 import de.rondiplomatico.spark.candy.base.CandyBase;
-import de.rondiplomatico.spark.candy.base.Crush;
+import de.rondiplomatico.spark.candy.base.Utils;
+import de.rondiplomatico.spark.candy.base.data.Crush;
 import scala.Tuple2;
 
 /**
@@ -26,7 +27,7 @@ public class Q5 extends CandyBase {
     public Q5(final boolean runB) {
         // Crush 3 mio candies!
         JavaRDD<Crush> crushes = crushCandies(3000000);
-        JavaPairRDD<String, String> homeRDD = getLivingPlaces();
+        JavaPairRDD<String, String> homeRDD = Utils.getHomeCities();
         // Get the start time
         long start = System.currentTimeMillis();
 

@@ -1,4 +1,4 @@
-package de.rondiplomatico.spark.candy.base;
+package de.rondiplomatico.spark.candy.base.data;
 
 import java.io.Serializable;
 

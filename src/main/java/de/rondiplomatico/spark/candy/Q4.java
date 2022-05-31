@@ -6,8 +6,8 @@ import org.apache.spark.api.java.JavaRDD;
 import com.google.common.collect.Iterables;
 
 import de.rondiplomatico.spark.candy.base.CandyBase;
-import de.rondiplomatico.spark.candy.base.Crush;
-import de.rondiplomatico.spark.candy.base.Deco;
+import de.rondiplomatico.spark.candy.base.data.Crush;
+import de.rondiplomatico.spark.candy.base.data.Deco;
 import scala.Tuple2;
 
 /**
