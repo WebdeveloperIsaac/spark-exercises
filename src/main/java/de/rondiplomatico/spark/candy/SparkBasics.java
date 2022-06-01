@@ -42,7 +42,7 @@ public class SparkBasics extends SparkBase {
 
     public JavaRDD<Crush> generate(int n) {
         List<Crush> data = Generator.generate(n);
-        return getJavaSparkContext().parallelize(data)
+        return getJavaSparkContext().parallelize(data, 80)
                   .cache();
     }
 

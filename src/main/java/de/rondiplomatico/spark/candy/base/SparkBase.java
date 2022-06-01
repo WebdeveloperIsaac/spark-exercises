@@ -3,7 +3,10 @@ package de.rondiplomatico.spark.candy.base;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -21,7 +24,7 @@ public class SparkBase {
     public static SparkSession getSparkSession() {
         if (session == null) {
             Builder b = SparkSession.builder();
-            if (!SparkSession.getActiveSession().isDefined()) {
+            if (System.getenv("os.version") == null) {
                 b.config(readFromFile("spark.conf"));
             }
             session = b.getOrCreate();
@@ -35,17 +38,43 @@ public class SparkBase {
         if (!in.isAbsolute()) {
             try (InputStream is = ClassLoader.getSystemResourceAsStream(configFile)) {
                 if (is == null) {
-                    throw new RuntimeException("Resource file " + configFile + " not found on ClassPath");
+                    throw new LearningException("Resource file " + configFile + " not found on ClassPath");
                 } else {
                     props.load(is);
                 }
             } catch (IOException e) {
-                throw new RuntimeException("Failed loading config file " + configFile + " from resources", e);
+                throw new LearningException("Failed loading config file " + configFile + " from resources", e);
             }
         }
+        parseEnvironmentVariables(props);
         SparkConf conf = new SparkConf();
         props.forEach((k, v) -> conf.set((String) k, (String) v));
         return conf;
+    }
+
+    private static void parseEnvironmentVariables(Properties conf) {
+        final Pattern variablePattern = Pattern.compile("\\$\\{(?<variable>[A-Z]+[A-Z0-9_]*)\\}");
+
+        for (Entry<Object, Object> t : conf.entrySet()) {
+            String value = (String) t.getValue();
+            Matcher m = variablePattern.matcher(value);
+            int lastIndex = 0;
+            StringBuilder output = new StringBuilder();
+            while (m.find()) {
+                output.append(value, lastIndex, m.start());
+                String envVar = System.getenv(m.group("variable"));
+                if (envVar == null) {
+                    throw new LearningException("Environment variable " + m.group("variable") + " required for property " + t.getKey()
+                                    + ", but is not set.");
+                }
+                output.append(envVar);
+                lastIndex = m.end();
+            }
+            if (lastIndex < value.length()) {
+                output.append(value, lastIndex, value.length());
+            }
+            conf.setProperty((String) t.getKey(), output.toString());
+        }
     }
 
     private JavaSparkContext jsc;
