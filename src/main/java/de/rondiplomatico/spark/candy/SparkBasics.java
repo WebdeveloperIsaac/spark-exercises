@@ -5,31 +5,28 @@ import java.util.Map;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Iterables;
 
+import de.rondiplomatico.spark.candy.base.SparkBase;
 import de.rondiplomatico.spark.candy.base.Utils;
 import de.rondiplomatico.spark.candy.base.data.Candy;
 import de.rondiplomatico.spark.candy.base.data.Color;
 import de.rondiplomatico.spark.candy.base.data.Crush;
 import de.rondiplomatico.spark.candy.base.data.Deco;
-import lombok.RequiredArgsConstructor;
 import scala.Tuple2;
 
-@RequiredArgsConstructor
-public class SparkBasics {
+public class SparkBasics extends SparkBase {
 
     private static final Logger log = LoggerFactory.getLogger(SparkBasics.class);
 
-    private final JavaSparkContext jsc;
     private Map<String, String> cities = Utils.getHomeCities();
 
     public static void main(String[] args) {
 
-        SparkBasics s = new SparkBasics(Utils.getJavaSparkContext());
+        SparkBasics s = new SparkBasics();
 
         JavaRDD<Crush> rdd = s.generate(1000);
 
@@ -45,7 +42,7 @@ public class SparkBasics {
 
     public JavaRDD<Crush> generate(int n) {
         List<Crush> data = Generator.generate(n);
-        return jsc.parallelize(data)
+        return getJavaSparkContext().parallelize(data)
                   .cache();
     }
 
