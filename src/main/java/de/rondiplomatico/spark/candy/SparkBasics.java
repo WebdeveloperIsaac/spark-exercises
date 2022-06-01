@@ -1,5 +1,6 @@
 package de.rondiplomatico.spark.candy;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +45,15 @@ public class SparkBasics extends SparkBase {
         List<Crush> data = Generator.generate(n);
         return getJavaSparkContext().parallelize(data)
                   .cache();
+    }
+
+    //TODO
+    public JavaRDD<Crush> generateInParallel(int parallelism, final int n) {
+        List<Integer> helperList = new ArrayList<>(parallelism);
+        for(int i = 0; i < parallelism; i++){
+            helperList.add(0);
+        }
+        return getJavaSparkContext().parallelize(helperList, parallelism).flatMap(e -> Generator.generate(n).iterator()).cache();
     }
 
     public void count(JavaRDD<Crush> rdd) {

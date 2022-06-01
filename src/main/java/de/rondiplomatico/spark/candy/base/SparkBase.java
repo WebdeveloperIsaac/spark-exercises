@@ -21,7 +21,7 @@ public class SparkBase {
     public static SparkSession getSparkSession() {
         if (session == null) {
             Builder b = SparkSession.builder();
-            if (!SparkSession.getActiveSession().isDefined()) {
+            if(System.getenv("SPARK_YARN_STAGING_DIR") == null || !System.getenv("SPARK_YARN_STAGING_DIR").contains("abfs://hdinsight")){
                 b.config(readFromFile("spark.conf"));
             }
             session = b.getOrCreate();
@@ -62,7 +62,7 @@ public class SparkBase {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Encoder<T> getBeanEncoder(Class<T> clazz) {
+    public  <T> Encoder<T> getBeanEncoder(Class<T> clazz) {
         if (String.class.equals(clazz)) {
             return (Encoder<T>) Encoders.STRING();
         } else if (Integer.class.equals(clazz)) {
