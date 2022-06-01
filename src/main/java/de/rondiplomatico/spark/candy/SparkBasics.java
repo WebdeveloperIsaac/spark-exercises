@@ -24,12 +24,12 @@ public class SparkBasics {
 
     private static final Logger log = LoggerFactory.getLogger(SparkBasics.class);
 
-    private final JavaSparkContext ctx;
+    private final JavaSparkContext jsc;
     private Map<String, String> cities = Utils.getHomeCities();
 
     public static void main(String[] args) {
 
-        SparkBasics s = new SparkBasics(Utils.getSpark());
+        SparkBasics s = new SparkBasics(Utils.getJavaSparkContext());
 
         JavaRDD<Crush> rdd = s.generate(1000);
 
@@ -45,7 +45,7 @@ public class SparkBasics {
 
     public JavaRDD<Crush> generate(int n) {
         List<Crush> data = Generator.generate(n);
-        return ctx.parallelize(data)
+        return jsc.parallelize(data)
                   .cache();
     }
 
@@ -68,9 +68,10 @@ public class SparkBasics {
 
         long crushedWrappedAtTime =
                         // Get the RED candies [Transformation]
-                        crushes.filter(c -> c.getTime().getHour() >= 12 && c.getTime().getHour() <= 13)
-                               // Get the striped ones [Transformation]
+                        crushes// Get the striped ones [Transformation]
                                .filter(c -> c.getCandy().getDeco().equals(Deco.WRAPPED))
+                               // .filter(c -> c.getTime().getHour() >= 12 && c.getTime().getHour() <= 13)
+                               .filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
                                // Count everything [Action]
                                .count();
 
@@ -132,7 +133,8 @@ public class SparkBasics {
          * How many candies in Ismaning between 14-15 o'clock, counted by color?
          */
         Map<Color, Long> res2 = crushes.filter(c -> "Ismaning".equals(local.get(c.getUser())))
-                                       .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
+                                       // .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
+                                       .filter(c -> c.asLocalTime().getHour() >= 14 && c.asLocalTime().getHour() <= 15)
                                        .map(c -> c.getCandy().getColor())
                                        .countByValue();
 

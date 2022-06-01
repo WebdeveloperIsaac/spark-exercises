@@ -32,7 +32,7 @@ public class Generator {
     public static List<Crush> generate(int n) {
         List<Crush> orders = new ArrayList<>(n);
         for (int o = 0; o < n; o++) {
-            orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime()));
+            orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime().toNanoOfDay()));
         }
         log.info("{} candies have been crushed!", orders.size());
         return orders;

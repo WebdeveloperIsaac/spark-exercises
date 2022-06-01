@@ -3,16 +3,16 @@ package de.rondiplomatico.spark.candy.base.data;
 import java.io.Serializable;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author wirtzd
  * @since 11.05.2021
  */
+@Data
+@NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
 public class Candy implements Serializable, Comparable<Candy> {
     private static final long serialVersionUID = -502567585290162061L;
 
