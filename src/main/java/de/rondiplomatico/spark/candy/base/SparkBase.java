@@ -14,6 +14,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SparkSession.Builder;
 
@@ -88,6 +89,10 @@ public class SparkBase {
 
     public <T> Dataset<T> toDataset(JavaRDD<T> rdd, Class<T> clazz) {
         return getSparkSession().createDataset(rdd.rdd(), getBeanEncoder(clazz));
+    }
+
+    public <T> JavaRDD<T> toJavaRDD(Dataset<Row> dataset, Class<T> clazz) {
+        return dataset.as(getBeanEncoder(clazz)).toJavaRDD();
     }
 
     @SuppressWarnings("unchecked")
