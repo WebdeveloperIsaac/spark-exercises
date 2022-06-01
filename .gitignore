@@ -1,3 +1,5 @@
+src/main/resources/spark-complete.conf
+
 # Compiled class file
 *.class
 
