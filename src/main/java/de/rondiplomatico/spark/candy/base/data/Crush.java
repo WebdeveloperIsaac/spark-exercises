@@ -3,9 +3,8 @@ package de.rondiplomatico.spark.candy.base.data;
 import java.io.Serializable;
 import java.time.LocalTime;
 import java.time.temporal.ChronoField;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalField;
 
+import de.rondiplomatico.spark.candy.base.Utils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,13 +27,20 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Crush implements Serializable {
     private static final long serialVersionUID = 2155658470274598167L;
 
     private Candy candy;
     private String user;
     private long time;
+
+    private byte[] bytes = Utils.randBytes();
+
+    public Crush(Candy candy, String randUser, long toNanoOfDay) {
+        this.candy = candy;
+        this.user = randUser;
+        this.time = toNanoOfDay;
+    }
 
     public LocalTime asLocalTime() {
         return LocalTime.ofNanoOfDay(time);

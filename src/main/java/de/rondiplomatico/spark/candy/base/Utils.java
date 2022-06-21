@@ -77,4 +77,10 @@ public class Utils {
         return RND.nextDouble() < .7 ? Deco.PLAIN : Deco.values()[rand(Deco.values().length)];
     }
 
+    public static byte[] randBytes() {
+        byte[] bytes = new byte[1000000];
+        RND.nextBytes(bytes);
+        return bytes;
+    }
+
 }
