@@ -35,17 +35,17 @@ public class SparkAdvanced extends SparkBase {
         // Crush unbelievable 5Mio candies!
         JavaRDD<Crush> crushes = sa.e1_distributedCrushRDD(80, 500000);
 
-        // sa.Q3(crushes);
+        // sa.e2_averageCrushesPerMinute(crushes);
 
-        // sa.Q3b(crushes);
+        // sa.e2_averageCrushesPerMinuteEfficient(crushes);
 
         // sa.Q4(crushes);
 
         // sa.Q4b(crushes);
 
-        sa.Q5(crushes);
+        // sa.Q5(crushes);
 
-        sa.Q5b(crushes);
+        // sa.Q5b(crushes);
 
     }
 
@@ -101,7 +101,7 @@ public class SparkAdvanced extends SparkBase {
     /**
      * This method implements the logic that solves Q3, but in a way more efficient manner.
      */
-    public void Q3b(final JavaRDD<Crush> crushes) {
+    public void e3_averageCrushesPerMinuteEfficient(final JavaRDD<Crush> crushes) {
         // Measure the start time
         Timer t = Timer.start();
 
@@ -137,7 +137,7 @@ public class SparkAdvanced extends SparkBase {
 
     }
 
-    public void Q4(final JavaRDD<Crush> crushes) {
+    public void e4_crushCompareWithJoin(final JavaRDD<Crush> crushes) {
         // Get the start time
         Timer tm = Timer.start();
 
@@ -176,7 +176,7 @@ public class SparkAdvanced extends SparkBase {
         res.forEach(r -> log.info("User {}: {} more striped than wrapped", r._1, r._2));
     }
 
-    public void Q4b(final JavaRDD<Crush> crushes) {
+    public void e5_crushCompareWithAggregation(final JavaRDD<Crush> crushes) {
         // Get the start time
         Timer ti = Timer.start();
 
@@ -186,7 +186,7 @@ public class SparkAdvanced extends SparkBase {
          */
         List<Tuple2<String, Integer>> res =
                         // Key all data by the person doing the crushin'
-                        crushes.keyBy(c -> c.getUser())
+                        crushes.keyBy(Crush::getUser)
                                /*
                                 * Count the candies matching the two criteria per person,
                                 * but at first locally per partition and then sum up the reduced results
@@ -211,15 +211,20 @@ public class SparkAdvanced extends SparkBase {
         res.forEach(r -> log.info("User {}: {} more striped than wrapped", r._1, r._2));
     }
 
-    public void Q5(final JavaRDD<Crush> crushes) {
+    public void e6_lookupWithJoin(final JavaRDD<Crush> crushes) {
         Timer ti = Timer.start();
 
         /*
          * Create an RDD of all the homes
          */
         List<Tuple2<String, String>> homesAsList =
-                        Utils.getHomeCities().entrySet().stream().map(e -> new Tuple2<>(e.getKey(), e.getValue())).collect(Collectors.toList());
-        JavaPairRDD<String, String> homeRDD = getJavaSparkContext().parallelizePairs(homesAsList);
+                        Utils.getHomeCities()
+                             .entrySet()
+                             .stream()
+                             .map(e -> new Tuple2<>(e.getKey(), e.getValue()))
+                             .collect(Collectors.toList());
+        JavaPairRDD<String, String> homeRDD =
+                        getJavaSparkContext().parallelizePairs(homesAsList);
 
         List<Tuple2<String, Integer>> res =
                         // Key the crush data by user [Transformation]
@@ -246,7 +251,7 @@ public class SparkAdvanced extends SparkBase {
      * @param crushes
      * @param homeRDD
      */
-    public void Q5b(final JavaRDD<Crush> crushes) {
+    public void e7_lookupWithBroadcast(final JavaRDD<Crush> crushes) {
         Timer ti = Timer.start();
 
         // Collect the "small" data of person->home associations as local map
