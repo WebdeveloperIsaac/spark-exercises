@@ -1,13 +1,10 @@
 package de.rondiplomatico.spark.candy;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.rdd.RDD;
-import org.apache.spark.sql.Dataset;
-
 import de.rondiplomatico.spark.candy.base.SparkBase;
 import de.rondiplomatico.spark.candy.base.data.Crush;
 import lombok.RequiredArgsConstructor;
-import org.codehaus.janino.Java;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,49 +12,48 @@ import org.slf4j.LoggerFactory;
 public class SparkPersistence extends SparkBase {
 
     private static final Logger log = LoggerFactory.getLogger(SparkPersistence.class);
-    private static final String DATALAKE_PATH = "abfss://data@stsparktraining.dfs.core.windows.net/teamA/";
+
+    private static final String TEAM_NAME = "TeamA";
+    public static final String DATALAKE_PATH = "abfss://data@stsparktraining.dfs.core.windows.net/" + TEAM_NAME + "/";
 
     public static void main(String[] args) {
+        int nData = 1000;
         JavaRDD<Crush> exampleInput = new SparkBasics().generate(1000);
         SparkPersistence sp = new SparkPersistence();
 
-        sp.writeRDDToLocalDisk(exampleInput, Crush.class);
-        log.info("Read {} candies from local file", sp.readRDDFromLocalDisk(Crush.class).count());
+        // Let's start with writing our data to local storage; Check you provided output folder if you can find the files
+        // Goals: fileFormat: parquet; outputFolder: "localOut"
+        // Tip: you can use toDataset to transform our JavaRDD to a dataset
+        sp.writeRDD(exampleInput, "localOut", Crush.class);
 
-        sp.writeRDDToDatalake(exampleInput, Crush.class, "local");
-        log.info("Read {} candies from datalake file", sp.readRDDFromDatalake(Crush.class, "local").count());
+        // Next step: reading the data from local storage and check if the number of written data is correct
+        // Tip: you can use toJavaRDD generate and JavaRDD from a Dataset
+        log.info("Expected: {}, Actual {}", nData, sp.readRDD(Crush.class, "localOut").count());
+
+        // Let's try to minimize the number of files writen
+        // Goals: fileFormat: parquet; outputFolder: "localOut"; Only 2 parquet files written
+        sp.writeRDD(exampleInput, "localOut", 2, Crush.class);
+
+        // To the cloud, upload the data on an azure datalake
+        // Careful pls use a unique folder (don't disrupt your teammates)
+        sp.writeRDD(exampleInput, DATALAKE_PATH + "fromLocal", Crush.class);
+
+        // Now we read the data from the cloud, this one should be simple
+        log.info("Expected: {}, Actual {}", nData, sp.readRDD(Crush.class, DATALAKE_PATH + "fromLocal").count());
     }
 
-    // TODO rdd to local
-    public <T> void writeRDDToLocalDisk(JavaRDD<T> rdd, Class<T> clazz){
+    public <T> void writeRDD(JavaRDD<T> rdd, String folder, Class<T> clazz) {
         Dataset<T> ds = toDataset(rdd, clazz);
-        ds.write().mode("append").parquet("output");
+        ds.write().mode("append").parquet(folder);
     }
 
-    
-    // TODO rdd to local in 10 partitions.
-    public <T> void writeRDDToLocalDiskWithPartitioning(JavaRDD<T> rdd, Class<T> clazz){
-        writeRDDToLocalDisk(rdd.repartition(5), clazz);
+    public <T> void writeRDD(JavaRDD<T> rdd, String folder, int outputPartitionNum, Class<T> clazz) {
+        writeRDD(rdd.repartition(outputPartitionNum), folder, clazz);
     }
-    
-    // TODO rdd from local to local evaluation (a simple script)
-    public <T> JavaRDD<T> readRDDFromLocalDisk(Class<T> clazz){
-        return getSparkSession().read().parquet("output").as(getBeanEncoder(clazz)).toJavaRDD();
-    }
-    
-    // TODO rdd to datalake
-    public <T> void writeRDDToDatalake(JavaRDD<T> rdd, Class<T> clazz, String subFolder){
-        Dataset<T> ds = toDataset(rdd, clazz);
-        ds.write().mode("append").parquet(DATALAKE_PATH + subFolder);
-    }
-    
-    // TODO rdd from datalake to local evaluation (a simple script)
-    public <T> JavaRDD<T> readRDDFromDatalake(Class<T> clazz, String subFolder){
-        return getSparkSession()
+
+    public <T> JavaRDD<T> readRDD(Class<T> clazz, String folder) {
+        return toJavaRDD(getSparkSession()
                 .read()
-                .parquet(DATALAKE_PATH + subFolder)
-                .as(getBeanEncoder(clazz))
-                .toJavaRDD();
+                .parquet(folder), clazz);
     }
-
 }
