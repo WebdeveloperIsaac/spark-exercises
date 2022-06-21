@@ -43,7 +43,8 @@ public class FunctionalJava {
     public static List<Crush> e1_crush(int n) {
         List<Crush> orders = new ArrayList<>(n);
         for (int o = 0; o < n; o++) {
-            orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime().toNanoOfDay()));
+            //orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime().toNanoOfDay()));
+            orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime()));
         }
         log.info("{} candies have been crushed!", orders.size());
         return orders;
@@ -62,7 +63,8 @@ public class FunctionalJava {
         // Exercise E2:
         // TODO Count how many wrapped candies have been crushed between 12-13 o'clock and log it.
         long res2 = data.stream()
-                        .filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
+                        //.filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
+                        .filter(c -> c.getTime().getHour() >= 12 && c.getTime().getHour() <= 13)
                         .filter(c -> c.getCandy().getDeco().equals(Deco.WRAPPED))
                         .count();
 
@@ -140,7 +142,7 @@ public class FunctionalJava {
          */
         Map<Color, Long> res2 = data.stream()
                                     .filter(c -> "Ismaning".equals(cities.get(c.getUser())))
-                                    .filter(c -> c.asLocalTime().getHour() >= 14 && c.asLocalTime().getHour() <= 15)
+                                    .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
                                     .collect(Collectors.groupingBy(c -> c.getCandy().getColor(), Collectors.counting()));
 
         res2.forEach((c, i) -> log.info("There are {} crushes in Ismaning with {} candies", i, c));

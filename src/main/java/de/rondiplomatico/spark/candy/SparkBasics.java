@@ -64,8 +64,8 @@ public class SparkBasics extends SparkBase {
                         // Get the RED candies [Transformation]
                         crushes// Get the striped ones [Transformation]
                                .filter(c -> c.getCandy().getDeco().equals(Deco.WRAPPED))
-                               // .filter(c -> c.getTime().getHour() >= 12 && c.getTime().getHour() <= 13)
-                               .filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
+                                .filter(c -> c.getTime().getHour() >= 12 && c.getTime().getHour() <= 13)
+//                               .filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
                                // Count everything [Action]
                                .count();
 

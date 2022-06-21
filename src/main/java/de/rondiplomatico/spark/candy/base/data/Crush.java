@@ -13,38 +13,32 @@ import lombok.NoArgsConstructor;
  * @author wirtzd
  * @since 11.05.2021
  */
-// @Data
-// @NoArgsConstructor
-// @AllArgsConstructor
-// public class Crush implements Serializable {
-// private static final long serialVersionUID = 2155658470274598167L;
+ @Data
+ @NoArgsConstructor
+ @AllArgsConstructor
+ public class Crush implements Serializable {
+ private static final long serialVersionUID = 2155658470274598167L;
+
+ private Candy candy;
+ private String user;
+ private LocalTime time;
+
+ }
+
+//@Data
+//@NoArgsConstructor
+//public class Crush implements Serializable {
+//    private static final long serialVersionUID = 2155658470274598167L;
 //
-// private Candy candy;
-// private String user;
-// private LocalTime time;
+//    private Candy candy;
+//    private String user;
+//    private long time;
 //
-// }
-
-@Data
-@NoArgsConstructor
-public class Crush implements Serializable {
-    private static final long serialVersionUID = 2155658470274598167L;
-
-    private Candy candy;
-    private String user;
-    private long time;
-
-    public Crush(Candy candy, String randUser, long toNanoOfDay) {
-        this.candy = candy;
-        this.user = randUser;
-        this.time = toNanoOfDay;
-    }
-
-    public LocalTime asLocalTime() {
-        return LocalTime.ofNanoOfDay(time);
-    }
-
-    public void setLocalTime(LocalTime value) {
-        time = value.getLong(ChronoField.NANO_OF_DAY);
-    }
-}
+//    public LocalTime asLocalTime() {
+//        return LocalTime.ofNanoOfDay(time);
+//    }
+//
+//    public void setLocalTime(LocalTime value) {
+//        time = value.getLong(ChronoField.NANO_OF_DAY);
+//    }
+//}
