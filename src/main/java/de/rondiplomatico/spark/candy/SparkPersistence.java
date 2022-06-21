@@ -18,7 +18,7 @@ public class SparkPersistence extends SparkBase {
 
     public static void main(String[] args) {
         int nData = 1000;
-        JavaRDD<Crush> exampleInput = new SparkBasics().generate(1000);
+        JavaRDD<Crush> exampleInput = new SparkBasics().e1_crushRDD(1000);
         SparkPersistence sp = new SparkPersistence();
 
         // Let's start with writing our data to local storage; Check you provided output folder if you can find the files

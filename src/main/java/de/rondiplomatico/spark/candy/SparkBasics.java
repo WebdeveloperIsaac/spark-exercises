@@ -1,6 +1,7 @@
 package de.rondiplomatico.spark.candy;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,41 +30,25 @@ public class SparkBasics extends SparkBase {
 
         SparkBasics s = new SparkBasics();
 
-        JavaRDD<Crush> rdd = s.generate(1000);
+        JavaRDD<Crush> rdd = s.e1_crushRDD(1000);
 
-        // s.count(rdd);
+        log.info("Number of rdd partitions: {}, number of elements: {}", rdd.getNumPartitions(), rdd.count());
 
-        // s.Q1_Spark(rdd);
+        // s.e2_countCandiesSpark(rdd);
 
-        // s.Q2_Spark(rdd);
+        // s.e3_countByColorRDD(rdd);
 
-        s.Q3_countByCity(rdd);
+        s.e4_cityLookup(rdd);
 
     }
 
-    public JavaRDD<Crush> generate(int n) {
-        List<Crush> data = Generator.generate(n);
+    public JavaRDD<Crush> e1_crushRDD(int n) {
+        List<Crush> data = FunctionalJava.e1_crush(n);
         return getJavaSparkContext().parallelize(data)
                                     .cache();
     }
 
-    // TODO
-    public JavaRDD<Crush> generateInParallel(int parallelism, final int n) {
-        List<Integer> helperList = new ArrayList<>(parallelism);
-        for (int i = 0; i < parallelism; i++) {
-            helperList.add(0);
-        }
-        return getJavaSparkContext().parallelize(helperList, parallelism)
-                                    .flatMap(e -> Generator.generate(n).iterator())
-                                    .cache();
-    }
-
-    public void count(JavaRDD<Crush> rdd) {
-        List<Crush> data = rdd.collect();
-        log.info("Hello World! Distributed and collected {} crushes", data.size());
-    }
-
-    public void Q1_Spark(JavaRDD<Crush> crushes) {
+    public void e2_countCandiesRDD(JavaRDD<Crush> crushes) {
         // Crush some candies!
 
         long crushedRedStriped =
@@ -87,7 +72,7 @@ public class SparkBasics extends SparkBase {
         log.info("The crush data contains {} wrapped striped candies that have been crushed between 12 and 13 o'clock!", crushedWrappedAtTime);
     }
 
-    public void Q2_Spark(JavaRDD<Crush> crushes) {
+    public void e3_countByColorRDD(JavaRDD<Crush> crushes) {
         /*
          * 1. Group the RDD by the candy color
          */
@@ -125,29 +110,46 @@ public class SparkBasics extends SparkBase {
         quickRes2.forEach((c, i) -> log.info("The crush data contains {} {} blue candies", i, c));
     }
 
-    public void Q3_countByCity(JavaRDD<Crush> crushes) {
-
-        // Map<String, Long> res = crushes.map(c -> cities.get(c.getUser()))
-        // .countByValue();
-
-        // Creating a local reference is key to avoid serialization of the whole surrounding class.
-        final Map<String, String> local = cities;
-        Map<String, Long> res = crushes.map(c -> local.get(c.getUser()))
-                                       .countByValue();
-
-        res.forEach((c, i) -> log.info("There are {} crushes in {}", i, c));
+    public void e4_cityLookup(JavaRDD<Crush> crushes) {
 
         /*
-         * TODO:
-         * How many candies in Ismaning between 14-15 o'clock, counted by color?
+         * "Naive" implementation of counting cities using a count map
          */
-        Map<Color, Long> res2 = crushes.filter(c -> "Ismaning".equals(local.get(c.getUser())))
-                                       // .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
-                                       .filter(c -> c.asLocalTime().getHour() >= 14 && c.asLocalTime().getHour() <= 15)
-                                       .map(c -> c.getCandy().getColor())
-                                       .countByValue();
+        Map<String, Integer> counts = new HashMap<>();
+        crushes.foreach(c -> {
+            String city = Utils.getHomeCities().get(c.getUser());
+            int newcnt = counts.getOrDefault(city, 0) + 1;
+            counts.put(city, newcnt);
+            log.info("Counting crush in {}, totalling {}", city, newcnt);
+        });
+        log.info("Counted crushes in {} cities", counts.size());
+        counts.forEach((c, i) -> log.info("There are {} crushes in {}", i, c));
+        
+        // What's wrong here?
 
-        res2.forEach((c, i) -> log.info("There are {} crushes in Ismaning with {} candies", i, c));
+        // TODO: Implement functional similar to the FunctionalJava E4, using the "cities" field of this SparkBasics class!
+//        Map<String, Long> res = crushes.map(c -> cities.get(c.getUser()))
+//                                       .countByValue();
+//        // What's still going wrong?
+//
+//        // Creating a local reference is key to avoid serialization of the whole surrounding class.
+        final Map<String, String> local = cities;
+        Map<String, Long> res2 = crushes.map(c -> local.get(c.getUser()))
+                                        .countByValue();
+//
+        res2.forEach((c, i) -> log.info("There are {} crushes in {}", i, c));
+//
+//        /*
+//         * TODO:
+//         * How many candies in Ismaning between 14-15 o'clock, counted by color?
+//         */
+//        Map<Color, Long> res3 = crushes.filter(c -> "Ismaning".equals(local.get(c.getUser())))
+//                                       // .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
+//                                       .filter(c -> c.asLocalTime().getHour() >= 14 && c.asLocalTime().getHour() <= 15)
+//                                       .map(c -> c.getCandy().getColor())
+//                                       .countByValue();
+//
+//        res3.forEach((c, i) -> log.info("There are {} crushes in Ismaning with {} candies", i, c));
     }
 
 }

@@ -6,7 +6,7 @@ import org.apache.spark.api.java.JavaRDD;
 public class ClusterDataGeneration {
 
     public static void main(String[] args){
-        SparkBasics generator = new SparkBasics();
+        SparkAdvanced generator = new SparkAdvanced();
         JavaRDD<Crush> data = generator.generateInParallel(100, 10);
 
         SparkPersistence persistence = new SparkPersistence();

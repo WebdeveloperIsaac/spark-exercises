@@ -1,5 +1,6 @@
 package de.rondiplomatico.spark.candy;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,10 +30,10 @@ public class SparkAdvanced extends SparkBase {
 
     public static void main(String[] args) {
 
-        // Crush unbelievable 5Mio candies!
-        JavaRDD<Crush> crushes = new SparkBasics().generateInParallel(80, 500000);
-
         SparkAdvanced sa = new SparkAdvanced();
+
+        // Crush unbelievable 5Mio candies!
+        JavaRDD<Crush> crushes = sa.generateInParallel(80, 500000);
 
         // sa.Q3(crushes);
 
@@ -46,6 +47,17 @@ public class SparkAdvanced extends SparkBase {
 
         sa.Q5b(crushes);
 
+    }
+
+    // TODO
+    public JavaRDD<Crush> generateInParallel(int parallelism, final int n) {
+        List<Integer> helperList = new ArrayList<>(parallelism);
+        for (int i = 0; i < parallelism; i++) {
+            helperList.add(0);
+        }
+        return getJavaSparkContext().parallelize(helperList, parallelism)
+                                    .flatMap(e -> FunctionalJava.e1_crush(n).iterator())
+                                    .cache();
     }
 
     /**

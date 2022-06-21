@@ -1,5 +1,6 @@
 package de.rondiplomatico.spark.candy;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,31 +15,52 @@ import de.rondiplomatico.spark.candy.base.data.Color;
 import de.rondiplomatico.spark.candy.base.data.Crush;
 import de.rondiplomatico.spark.candy.base.data.Deco;
 
-public class FunctionalProcessing {
+public class FunctionalJava {
 
-    private static final Logger log = LoggerFactory.getLogger(FunctionalProcessing.class);
+    private static final Logger log = LoggerFactory.getLogger(FunctionalJava.class);
 
     public static void main(String[] args) {
-        List<Crush> data = Generator.generate(1000);
+        // TODO CL comment out
+        List<Crush> data = e1_crush(1000);
 
-        Q1_countCrushes(data);
+        // e2_countCandies(data);
 
-        Q2_countByColor(data);
+//        e3_countByColor(data);
 
-        Q3_countByCity(data);
+         e4_cityLookup(data);
     }
 
-    public static void Q1_countCrushes(List<Crush> data) {
+    /**
+     * Task: Implement logic that generates a list of n random Crush events!
+     * Use the {@link Crush} and {@link Candy} constructors along with the {@link Utils} randXY methods.
+     * 
+     * Also log how many events have been generated with log4j at the end, using the "log" logger.
+     *
+     * @param n
+     *            the number of events required
+     * @return the list of crush events
+     */
+    public static List<Crush> e1_crush(int n) {
+        List<Crush> orders = new ArrayList<>(n);
+        for (int o = 0; o < n; o++) {
+            orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime().toNanoOfDay()));
+        }
+        log.info("{} candies have been crushed!", orders.size());
+        return orders;
+    }
+
+    public static void e2_countCandies(List<Crush> data) {
 
         long res = data.stream()
-                       .map(cr -> cr.getCandy())
+                       .map(Crush::getCandy)
                        .filter(c -> c.getColor().equals(Color.RED))
                        .filter(c -> c.getDeco().equals(Deco.HSTRIPES) || c.getDeco().equals(Deco.VSTRIPES))
                        .count();
 
         log.info("The crush data contains {} red striped candies!", res);
 
-        // TODO: Count how many wrapped candies have been crushed between 12-13 o'clock and log it.
+        // Exercise E2:
+        // TODO Count how many wrapped candies have been crushed between 12-13 o'clock and log it.
         long res2 = data.stream()
                         .filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
                         .filter(c -> c.getCandy().getDeco().equals(Deco.WRAPPED))
@@ -48,7 +70,7 @@ public class FunctionalProcessing {
 
     }
 
-    public static void Q2_countByColor(List<Crush> data) {
+    public static void e3_countByColor(List<Crush> data) {
 
         Map<Color, Integer> res = new HashMap<>();
         for (Crush c : data) {
@@ -84,15 +106,33 @@ public class FunctionalProcessing {
         res3.forEach((c, i) -> log.info("The crush data contains {} {} blue candies", i, c));
     }
 
-    public static void Q3_countByCity(List<Crush> data) {
+    public static void e4_cityLookup(List<Crush> data) {
 
+        // Get the map of cities
         Map<String, String> cities = Utils.getHomeCities();
 
+        /*
+         * Imperative implementation: How may crushes per city?
+         */
+        Map<String, Integer> counts = new HashMap<>();
+        for (Crush c : data) {
+            String city = cities.get(c.getUser());
+            counts.put(city, counts.getOrDefault(city, 0) + 1);
+        }
+        counts.forEach((c, i) -> log.info("There are {} crushes in {}", i, c));
+
+        /*
+         * TODO:
+         * Functional implementation: How may crushes per city?
+         */
         Map<String, Long> res = data.stream()
                                     .map(c -> cities.get(c.getUser()))
                                     .collect(Collectors.groupingBy(s -> s, Collectors.counting()));
 
         res.forEach((c, i) -> log.info("There are {} crushes in {}", i, c));
+
+        // Teach-In: Demonstrating effectively final fields
+        // cities = null;
 
         /*
          * TODO:
