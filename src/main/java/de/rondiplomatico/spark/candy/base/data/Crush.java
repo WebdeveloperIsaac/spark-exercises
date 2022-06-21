@@ -34,8 +34,6 @@ public class Crush implements Serializable {
     private String user;
     private long time;
 
-    private byte[] bytes = Utils.randBytes();
-
     public Crush(Candy candy, String randUser, long toNanoOfDay) {
         this.candy = candy;
         this.user = randUser;

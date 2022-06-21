@@ -17,7 +17,7 @@ public class SparkPersistence extends SparkBase {
     private static final String USER_NAME = "qukoegl";
 
     public static void main(String[] args) {
-        int nData = 100;
+        int nData = 20000000;
         JavaRDD<Crush> exampleInput = new SparkBasics().e1_crushRDD(nData);
         SparkPersistence sp = new SparkPersistence();
 
@@ -48,29 +48,29 @@ public class SparkPersistence extends SparkBase {
 //
 //        // To the cloud, upload the data on an azure datalake
 //        // Careful pls use a unique folder (don't disrupt your teammates)
-//        sp.e1_writeRDD(exampleInput, DATALAKE_PATH + "fromLocal", Crush.class);
+        sp.e1_writeRDD(exampleInput, getOutputDirectory() + "fromLocal", Crush.class);
 
 
-        for (int i = 0; i < 10; i++) {
-            long x = System.currentTimeMillis();
+        long x = System.currentTimeMillis();
+//        JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, DATALAKE_PATH + "fromLocal").filter(e -> e.getUser().equals("Hans"));
+//            JavaRDD<Crush> data = sp.e3_readRDD(Crush.class, DATALAKE_PATH + "fromLocal", "user=='H'");
 //        JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, getOutputDirectory() + "fromLocal").filter(e -> e.getUser().equals("Hans"));
-            JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, getOutputDirectory() + "fromLocal", "user=='H'");
+        JavaRDD<Crush> data = sp.e4_readRDD(Crush.class, getOutputDirectory() + "fromLocal", "user=='H'");
 //        // Now we read the data from the cloud, this one should be simple
-            log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
-        }
-        for (int i = 0; i < 10; i++) {
-            long x = System.currentTimeMillis();
-        JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, getOutputDirectory() + "fromLocal").filter(e -> e.getUser().equals("H"));
+        log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
+
+        x = System.currentTimeMillis();
+        data = sp.e2_readRDD(Crush.class, getOutputDirectory() + "fromLocal").filter(e -> e.getUser().equals("H"));
 //            JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, getOutputDirectory() + "fromLocal", "user=='Hans'");
 //        // Now we read the data from the cloud, this one should be simple
-            log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
-        }
+        log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
+
     }
-    
+
     public static String getOutputDirectory() {
         // Without any scheme, the string will be interpreted relative to the current working directory using the default file system
 //        return "localOut";
-        
+
         // <Schema>://<container_name>@<storage_account_name>.dfs.core.windows.net/<local_path>
         return "abfss://data@stsparktraining.dfs.core.windows.net/" + USER_NAME + "/";
     }
@@ -78,23 +78,28 @@ public class SparkPersistence extends SparkBase {
     public <T> void e1_writeRDD(JavaRDD<T> rdd, String folder, Class<T> clazz) {
         Dataset<T> ds = toDataset(rdd, clazz);
         ds.write()
+//                TODO Experiment with different APPEND/OVERRIDE MODE
 //              TODO APPEND/OVERRIDE MODE
                 .mode("overwrite")
                 .parquet(folder);
     }
 
+    //TODO add e1_writeRDD(JavaRDD<T> rdd, String folder, Class<T> clazz, int outputPartitionNum)
     public <T> void e1_writeRDD(JavaRDD<T> rdd, String folder, Class<T> clazz, int outputPartitionNum) {
         JavaRDD<T> repartitioned = rdd.repartition(outputPartitionNum);
         e1_writeRDD(repartitioned, folder, clazz);
     }
 
+
+    // TODO Use DatasetRead from SparkSession and SparkBase.toJavaRDD()
     public <T> JavaRDD<T> e2_readRDD(Class<T> clazz, String folder) {
         Dataset<Row> dataset = getSparkSession().read().parquet(folder);
         dataset.explain();
         return toJavaRDD(dataset, clazz);
     }
 
-    public <T> JavaRDD<T> e2_readRDD(Class<T> clazz, String folder, String condition) {
+    //TODO Filter the dataset
+    public <T> JavaRDD<T> e4_readRDD(Class<T> clazz, String folder, String condition) {
         Dataset<Row> dataset = getSparkSession().read().parquet(folder).filter(condition);
         dataset.explain();
         return toJavaRDD(dataset, clazz);
