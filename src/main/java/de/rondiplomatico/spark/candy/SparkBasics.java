@@ -43,17 +43,19 @@ public class SparkBasics extends SparkBase {
 
     public JavaRDD<Crush> generate(int n) {
         List<Crush> data = Generator.generate(n);
-        return getJavaSparkContext().parallelize(data, 80)
-                  .cache();
+        return getJavaSparkContext().parallelize(data)
+                                    .cache();
     }
 
-    //TODO
+    // TODO
     public JavaRDD<Crush> generateInParallel(int parallelism, final int n) {
         List<Integer> helperList = new ArrayList<>(parallelism);
-        for(int i = 0; i < parallelism; i++){
+        for (int i = 0; i < parallelism; i++) {
             helperList.add(0);
         }
-        return getJavaSparkContext().parallelize(helperList, parallelism).flatMap(e -> Generator.generate(n).iterator()).cache();
+        return getJavaSparkContext().parallelize(helperList, parallelism)
+                                    .flatMap(e -> Generator.generate(n).iterator())
+                                    .cache();
     }
 
     public void count(JavaRDD<Crush> rdd) {
