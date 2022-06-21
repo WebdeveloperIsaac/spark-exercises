@@ -33,7 +33,7 @@ public class SparkAdvanced extends SparkBase {
         SparkAdvanced sa = new SparkAdvanced();
 
         // Crush unbelievable 5Mio candies!
-        JavaRDD<Crush> crushes = sa.generateInParallel(80, 500000);
+        JavaRDD<Crush> crushes = sa.e1_distributedCrushRDD(80, 500000);
 
         // sa.Q3(crushes);
 
@@ -50,7 +50,7 @@ public class SparkAdvanced extends SparkBase {
     }
 
     // TODO
-    public JavaRDD<Crush> generateInParallel(int parallelism, final int n) {
+    public JavaRDD<Crush> e1_distributedCrushRDD(int parallelism, final int n) {
         List<Integer> helperList = new ArrayList<>(parallelism);
         for (int i = 0; i < parallelism; i++) {
             helperList.add(0);
@@ -63,7 +63,7 @@ public class SparkAdvanced extends SparkBase {
     /**
      * This implements the logic that solves Q3.
      */
-    public void Q3(final JavaRDD<Crush> crushes) {
+    public void e2_averageCrushesPerMinute(final JavaRDD<Crush> crushes) {
 
         // Measure the starting point
         Timer t = Timer.start();
