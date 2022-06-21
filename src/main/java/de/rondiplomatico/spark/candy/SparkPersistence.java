@@ -14,12 +14,12 @@ public class SparkPersistence extends SparkBase {
 
     private static final Logger log = LoggerFactory.getLogger(SparkPersistence.class);
 
-    private static final String TEAM_NAME = "TeamA";
-    public static final String DATALAKE_PATH = "abfss://data@stsparktraining.dfs.core.windows.net/" + TEAM_NAME + "/";
+    private static final String USER_NAME = "qukoegl";
+    public static final String DATALAKE_PATH = "abfss://data@stsparktraining.dfs.core.windows.net/" + USER_NAME + "/";
 
     public static void main(String[] args) {
-        int nData = 200;
-        JavaRDD<Crush> exampleInput = new SparkBasics().generate(nData);
+        int nData = 100;
+        JavaRDD<Crush> exampleInput = new SparkBasics().e1_crushRDD(nData);
         SparkPersistence sp = new SparkPersistence();
 
         // Let's start with writing our data to local storage; Check you provided output folder if you can find the files
@@ -31,15 +31,14 @@ public class SparkPersistence extends SparkBase {
         // Goals: fileFormat: parquet; outputFolder: "localOut"; Only 2 parquet files written
 //        sp.e1_writeRDD(exampleInput, "localOut", Crush.class, 2);
 
-        long x = System.currentTimeMillis();
+////
+////        // Next step: reading the data from local storage and check if the number of written data is correct
+////        // Tip: you can use SparkBase.toJavaRDD() generate and JavaRDD from a Dataset
+//        JavaRDD<Crush> data;
 //
-//        // Next step: reading the data from local storage and check if the number of written data is correct
-//        // Tip: you can use SparkBase.toJavaRDD() generate and JavaRDD from a Dataset
-        JavaRDD<Crush> data;
-
-        data = sp.e2_readRDD(Crush.class, "localOut").filter(e -> e.getUser().equals("Hans"));
-
-        log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
+//        data = sp.e2_readRDD(Crush.class, "localOut").filter(e -> e.getUser().equals("Hans"));
+//
+//        log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
 //
 //        data = sp.e2_readRDD(Crush.class, "localOut", "user=='Hans'");
 //
@@ -51,9 +50,22 @@ public class SparkPersistence extends SparkBase {
 //        // To the cloud, upload the data on an azure datalake
 //        // Careful pls use a unique folder (don't disrupt your teammates)
 //        sp.e1_writeRDD(exampleInput, DATALAKE_PATH + "fromLocal", Crush.class);
-//
+
+
+        for (int i = 0; i < 10; i++) {
+            long x = System.currentTimeMillis();
+//        JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, DATALAKE_PATH + "fromLocal").filter(e -> e.getUser().equals("Hans"));
+            JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, DATALAKE_PATH + "fromLocal", "user=='H'");
 //        // Now we read the data from the cloud, this one should be simple
-//        log.info("Expected: {}, Actual {}", nData, sp.e2_readRDD(Crush.class, DATALAKE_PATH + "fromLocal").count());
+            log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
+        }
+        for (int i = 0; i < 10; i++) {
+            long x = System.currentTimeMillis();
+        JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, DATALAKE_PATH + "fromLocal").filter(e -> e.getUser().equals("H"));
+//            JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, DATALAKE_PATH + "fromLocal", "user=='Hans'");
+//        // Now we read the data from the cloud, this one should be simple
+            log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
+        }
     }
 
     public <T> void e1_writeRDD(JavaRDD<T> rdd, String folder, Class<T> clazz) {
