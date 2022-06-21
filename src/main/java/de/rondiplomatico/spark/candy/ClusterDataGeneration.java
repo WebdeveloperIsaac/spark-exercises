@@ -10,6 +10,6 @@ public class ClusterDataGeneration {
         JavaRDD<Crush> data = generator.e1_distributedCrushRDD(100, 10);
 
         SparkPersistence persistence = new SparkPersistence();
-        persistence.e1_writeRDD(data, SparkPersistence.DATALAKE_PATH + "cluster",Crush.class);
+        persistence.e1_writeRDD(data, SparkPersistence.getOutputDirectory() + "cluster",Crush.class);
     }
 }

@@ -15,7 +15,6 @@ public class SparkPersistence extends SparkBase {
     private static final Logger log = LoggerFactory.getLogger(SparkPersistence.class);
 
     private static final String USER_NAME = "qukoegl";
-    public static final String DATALAKE_PATH = "abfss://data@stsparktraining.dfs.core.windows.net/" + USER_NAME + "/";
 
     public static void main(String[] args) {
         int nData = 100;
@@ -36,11 +35,11 @@ public class SparkPersistence extends SparkBase {
 ////        // Tip: you can use SparkBase.toJavaRDD() generate and JavaRDD from a Dataset
 //        JavaRDD<Crush> data;
 //
-//        data = sp.e2_readRDD(Crush.class, "localOut").filter(e -> e.getUser().equals("Hans"));
+//        data = sp.e2_readRDD(Crush.class, getOutputDirectory()).filter(e -> e.getUser().equals("Hans"));
 //
 //        log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
 //
-//        data = sp.e2_readRDD(Crush.class, "localOut", "user=='Hans'");
+//        data = sp.e2_readRDD(Crush.class, getOutputDirectory(), "user=='Hans'");
 //
 //        log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
 
@@ -54,24 +53,32 @@ public class SparkPersistence extends SparkBase {
 
         for (int i = 0; i < 10; i++) {
             long x = System.currentTimeMillis();
-//        JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, DATALAKE_PATH + "fromLocal").filter(e -> e.getUser().equals("Hans"));
-            JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, DATALAKE_PATH + "fromLocal", "user=='H'");
+//        JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, getOutputDirectory() + "fromLocal").filter(e -> e.getUser().equals("Hans"));
+            JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, getOutputDirectory() + "fromLocal", "user=='H'");
 //        // Now we read the data from the cloud, this one should be simple
             log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
         }
         for (int i = 0; i < 10; i++) {
             long x = System.currentTimeMillis();
-        JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, DATALAKE_PATH + "fromLocal").filter(e -> e.getUser().equals("H"));
-//            JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, DATALAKE_PATH + "fromLocal", "user=='Hans'");
+        JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, getOutputDirectory() + "fromLocal").filter(e -> e.getUser().equals("H"));
+//            JavaRDD<Crush> data = sp.e2_readRDD(Crush.class, getOutputDirectory() + "fromLocal", "user=='Hans'");
 //        // Now we read the data from the cloud, this one should be simple
             log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
         }
+    }
+    
+    public static String getOutputDirectory() {
+        // Without any scheme, the string will be interpreted relative to the current working directory using the default file system
+//        return "localOut";
+        
+        // <Schema>://<container_name>@<storage_account_name>.dfs.core.windows.net/<local_path>
+        return "abfss://data@stsparktraining.dfs.core.windows.net/" + USER_NAME + "/";
     }
 
     public <T> void e1_writeRDD(JavaRDD<T> rdd, String folder, Class<T> clazz) {
         Dataset<T> ds = toDataset(rdd, clazz);
         ds.write()
-//                TODO APPEND/OVERRIDE MODE
+//              TODO APPEND/OVERRIDE MODE
                 .mode("overwrite")
                 .parquet(folder);
     }

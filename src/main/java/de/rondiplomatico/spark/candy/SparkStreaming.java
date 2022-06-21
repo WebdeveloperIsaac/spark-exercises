@@ -1,3 +1,4 @@
+package de.rondiplomatico.spark.candy;
 //package de.rondiplomatico.spark.candy;
 //
 //import de.rondiplomatico.spark.candy.base.SparkBase;
