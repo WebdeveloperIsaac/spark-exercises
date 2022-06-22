@@ -27,6 +27,7 @@ import lombok.NoArgsConstructor;
 
 //@Data
 //@NoArgsConstructor
+//@AllArgsConstructor
 //public class Crush implements Serializable {
 //    private static final long serialVersionUID = 2155658470274598167L;
 //

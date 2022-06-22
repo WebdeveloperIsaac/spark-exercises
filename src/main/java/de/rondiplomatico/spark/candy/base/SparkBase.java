@@ -18,10 +18,30 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SparkSession.Builder;
 
+/**
+ * This is the base class providing convenience access to the spark environment.
+ * It manages creation of the spark session and reads the spark config from the src/main/resources folder.
+ * 
+ * @since 2022-06-22
+ * @author wirtzd
+ *
+ */
 public class SparkBase {
+
+    /**
+     * Pattern used to match variables in spark config files.
+     */
+    public static final String VAR_PATTERN = "\\$\\{(?<variable>[A-Z]+[A-Z0-9_]*)\\}";
 
     private static SparkSession session;
 
+    /**
+     * Returns the spark session
+     * 
+     * Lazily evaluated, the session is kept as a singleton.
+     * 
+     * @return The spark session
+     */
     public static SparkSession getSparkSession() {
         if (session == null) {
             Builder b = SparkSession.builder();
@@ -33,9 +53,18 @@ public class SparkBase {
         return session;
     }
 
+    /**
+     * Utility method to read the spark config from a local config file (either from resources or local file system)
+     * 
+     * Also parses any environment variables declared using the variable pattern {@link VAR_PATTERN}.
+     * 
+     * @param configFile
+     * @return A SparkConf object with the parameters from the config file.
+     */
     private static SparkConf readFromFile(String configFile) {
         Properties props = new Properties();
         File in = new File(configFile);
+        // For relative paths, chech the classpath for according files first.
         if (!in.isAbsolute()) {
             try (InputStream is = ClassLoader.getSystemResourceAsStream(configFile)) {
                 if (is == null) {
@@ -47,14 +76,23 @@ public class SparkBase {
                 throw new LearningException("Failed loading config file " + configFile + " from resources", e);
             }
         }
+        // Parse any env vars
         parseEnvironmentVariables(props);
+        // Copy the variables to a spark conf object (no direct constructor available)
         SparkConf conf = new SparkConf();
         props.forEach((k, v) -> conf.set((String) k, (String) v));
         return conf;
     }
 
+    /**
+     * Reads all entries from the provided Properties and replaces any variable matching the pattern {@link VAR_PATTERN} by corresponding environment variables.
+     * 
+     * @param conf
+     * @throws LearningException
+     *             if no environment variable is found for a declared variable
+     */
     private static void parseEnvironmentVariables(Properties conf) {
-        final Pattern variablePattern = Pattern.compile("\\$\\{(?<variable>[A-Z]+[A-Z0-9_]*)\\}");
+        final Pattern variablePattern = Pattern.compile(VAR_PATTERN);
 
         for (Entry<Object, Object> t : conf.entrySet()) {
             String value = (String) t.getValue();
@@ -78,8 +116,19 @@ public class SparkBase {
         }
     }
 
+    /**
+     * The instance-based java spark context.
+     * Wraps the scala spark context object and provides access methods for the java interfaces to spark objects.
+     */
     private JavaSparkContext jsc;
 
+    /**
+     * Returns the java spark context of this class.
+     * 
+     * Is lazily initiated and kept as a singleton for this instance
+     * 
+     * @return
+     */
     public JavaSparkContext getJavaSparkContext() {
         if (jsc == null) {
             jsc = JavaSparkContext.fromSparkContext(getSparkSession().sparkContext());
@@ -87,14 +136,48 @@ public class SparkBase {
         return jsc;
     }
 
+    /**
+     * Helper method to convert a spark java RDD to a Spark SQL Dataset.
+     * 
+     * @param <T>
+     *            The generic RDD data type
+     * @param rdd
+     *            The RDD to convert
+     * @param clazz
+     *            The class of the generic type to create the bean encoder from
+     * @return A spark sql dataset
+     */
     public <T> Dataset<T> toDataset(JavaRDD<T> rdd, Class<T> clazz) {
         return getSparkSession().createDataset(rdd.rdd(), getBeanEncoder(clazz));
     }
 
+    /**
+     * Helper method to create a java RDD from a Spark SQL Dataset.
+     * 
+     * @param <T>
+     *            The generic RDD data type
+     * @param rdd
+     *            The dataset to convert
+     * @param clazz
+     *            The class of the generic type to create the bean encoder from
+     * @return A spark typed java RDD
+     */
     public <T> JavaRDD<T> toJavaRDD(Dataset<Row> dataset, Class<T> clazz) {
         return dataset.as(getBeanEncoder(clazz)).toJavaRDD();
     }
 
+    /**
+     * Encoders are the main tool to map java objects to spark sql struct types and vice versa.
+     * 
+     * This takes a lot of work from programmers who want to work with POJO's in their code and "just want to store them" in a e.g. parquet file
+     * 
+     * However, automatic conversion for complex nested POJOs is not always working and for some objects the bean encoder will fail, as we will see in the
+     * exercises.
+     * 
+     * @param <T>
+     * @param clazz
+     * @return
+     */
     @SuppressWarnings("unchecked")
     public <T> Encoder<T> getBeanEncoder(Class<T> clazz) {
         if (String.class.equals(clazz)) {

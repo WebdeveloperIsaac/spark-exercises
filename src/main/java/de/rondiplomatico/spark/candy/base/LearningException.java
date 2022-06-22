@@ -1,7 +1,7 @@
 package de.rondiplomatico.spark.candy.base;
 
 /**
- * The Class LearningException.
+ * Exception class for the exercises, mainly to shut up sonar ;-)
  */
 public class LearningException extends RuntimeException {
 
