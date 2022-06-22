@@ -1,4 +1,4 @@
-package de.rondiplomatico.spark.candy.streaming;
+package de.rondiplomatico.spark.candy.streaming.oauth;
 
 import com.microsoft.aad.msal4j.ClientCredentialFactory;
 import com.microsoft.aad.msal4j.ClientCredentialParameters;

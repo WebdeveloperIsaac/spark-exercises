@@ -1,4 +1,4 @@
-package de.rondiplomatico.spark.candy.streaming;
+package de.rondiplomatico.spark.candy.streaming.oauth;
 
 import org.apache.kafka.common.security.oauthbearer.OAuthBearerToken;
 
