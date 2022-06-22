@@ -79,7 +79,7 @@ public class FunctionalJava {
             // orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime().toNanoOfDay()));
             orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime()));
         }
-        log.info("{} candies have been crushed!", orders.size());
+        //log.info("{} candies have been crushed!", orders.size());
 
         return orders;
     }

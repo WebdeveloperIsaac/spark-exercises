@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.curator.shaded.com.google.common.collect.Lists;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.broadcast.Broadcast;
@@ -20,22 +21,62 @@ import de.rondiplomatico.spark.candy.base.Utils;
 import de.rondiplomatico.spark.candy.base.data.Color;
 import de.rondiplomatico.spark.candy.base.data.Crush;
 import de.rondiplomatico.spark.candy.base.data.Deco;
-import lombok.RequiredArgsConstructor;
 import scala.Tuple2;
 
-@RequiredArgsConstructor
+/**
+ * Main class for the exercises of section 4: advanced spark
+ * 
+ * @since 2022-06-22
+ * @author wirtzd
+ *
+ */
+@SuppressWarnings("java:S100")
 public class SparkAdvanced extends SparkBase {
 
     private static final Logger log = LoggerFactory.getLogger(SparkAdvanced.class);
 
+    /**
+     * Configure your environment to run this class for section 4.
+     * 
+     * @param args
+     */
     public static void main(String[] args) {
 
+        // Create a local instance
         SparkAdvanced sa = new SparkAdvanced();
 
-        // Crush unbelievable 5Mio candies!
-        JavaRDD<Crush> crushes = sa.e1_distributedCrushRDD(80, 500000);
+        /**
+         * E1: Creating distributed crushes
+         */
+        // JavaRDD<Crush> crushes = sa.e1_distributedCrushRDD(80, 5000);
 
+        /**
+         * E2: Averaging
+         */
         // sa.e2_averageCrushesPerMinute(crushes);
+
+        /*
+         * TODO E2: Averaging
+         * 
+         * Play around with execution times for different data sizes and partitions:
+         * - Partitions: 1, 5, 50, 150
+         * - Sizes: 6000, 60000, 10000, 25000
+         * - Investigate the job, stage and task structure locally (localhost:4040)
+         * - Note the times and create a excel plot for time against number of partitions
+         * 
+         * 2 x 3m, 10 x 600k, 50 x 120k, 100 x 60k, 150 x 4k
+         * 
+         * 
+         * 
+         * Hints:
+         * - You may use a loop or repeat the code in the main method
+         * - You may disable the log output from FunctionalJava#e1_crush for better readability
+         */
+        int total = 12000000;
+        for (int p : Lists.newArrayList(2, 10, 50, 100, 150)) {
+            JavaRDD<Crush> tmp = sa.e1_distributedCrushRDD(p, total / p);
+            sa.e2_averageCrushesPerMinute(tmp);
+        }
 
         // sa.e2_averageCrushesPerMinuteEfficient(crushes);
 
@@ -49,21 +90,39 @@ public class SparkAdvanced extends SparkBase {
 
     }
 
-    // TODO
+    /**
+     * Creates a RDD of crushes in parallel.
+     * Results in parallelism x n crushes.
+     * 
+     * @param parallelism
+     *            the number of partitions to create crushes at
+     * @param n
+     *            the number of crushes
+     * @return
+     */
     public JavaRDD<Crush> e1_distributedCrushRDD(int parallelism, final int n) {
+        /*
+         * TODO E1: Distributed crushing
+         * 
+         * - Create a local list of "parallelism" integers of value "n"
+         * - Parallelize that list
+         * - Create a transformation that uses that integer to create n crushes.
+         * 
+         * Hint: The function "flapMap" allows to return a collection of elements that are automatically combined by spark.
+         */
         List<Integer> helperList = new ArrayList<>(parallelism);
         for (int i = 0; i < parallelism; i++) {
-            helperList.add(0);
+            helperList.add(n);
         }
         return getJavaSparkContext().parallelize(helperList, parallelism)
-                                    .flatMap(e -> FunctionalJava.e1_crush(n).iterator())
+                                    .flatMap(e -> FunctionalJava.e1_crush(e).iterator())
                                     .cache();
     }
 
     /**
      * This implements the logic that solves Q3.
      */
-    public void e2_averageCrushesPerMinute(final JavaRDD<Crush> crushes) {
+    public long e2_averageCrushesPerMinute(final JavaRDD<Crush> crushes) {
 
         // Measure the starting point
         Timer t = Timer.start();
@@ -95,7 +154,10 @@ public class SparkAdvanced extends SparkBase {
         double average = nCrushes / (double) nTimes;
 
         // Measure the elapsed time and produce some classy output
-        log.info("Average Candy crushes per Minute: {}, computed in {}s", average, t.elapsedSeconds());
+        log.info("Average Candy crushes per Minute: {}, computed in {}ms. {} crushes in {} partitions", average,
+                 t.elapsedMS(), nCrushes, crushes.getNumPartitions());
+
+        return t.elapsedMS();
     }
 
     /**
