@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.curator.shaded.com.google.common.collect.Lists;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.broadcast.Broadcast;
@@ -39,16 +38,18 @@ public class SparkAdvanced extends SparkBase {
      * Configure your environment to run this class for section 4.
      * 
      * @param args
+     * @throws InterruptedException
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         // Create a local instance
         SparkAdvanced sa = new SparkAdvanced();
+        int total = 12000000;
 
         /**
          * E1: Creating distributed crushes
          */
-        // JavaRDD<Crush> crushes = sa.e1_distributedCrushRDD(80, 5000);
+//        JavaRDD<Crush> crushes = sa.e1_distributedCrushRDD(total / 150, 150);
 
         /**
          * E2: Averaging
@@ -58,49 +59,86 @@ public class SparkAdvanced extends SparkBase {
         /*
          * TODO E2: Averaging
          * 
-         * Play around with execution times for different data sizes and partitions:
-         * - Partitions: 1, 5, 50, 150
-         * - Sizes: 6000, 60000, 10000, 25000
+         * Play around with execution times for different number of partitions:
+         * - Create 12 Million crushes (distributed)
+         * - Use Partitions: 2, 10, 50, 100, 150, 500
          * - Investigate the job, stage and task structure locally (localhost:4040)
-         * - Note the times and create a excel plot for time against number of partitions
-         * 
-         * 2 x 3m, 10 x 600k, 50 x 120k, 100 x 60k, 150 x 4k
-         * 
-         * 
+         * - Note the times and maybe create a excel plot for time against number of partitions
          * 
          * Hints:
          * - You may use a loop or repeat the code in the main method
          * - You may disable the log output from FunctionalJava#e1_crush for better readability
+         * 
+         * Bonus task: Also vary the data size on top of the number of partitions!
          */
-        int total = 12000000;
-        for (int p : Lists.newArrayList(2, 10, 50, 100, 150)) {
-            JavaRDD<Crush> tmp = sa.e1_distributedCrushRDD(p, total / p);
-            sa.e2_averageCrushesPerMinute(tmp);
-        }
+        // for (int p : Lists.newArrayList(2, 10, 50, 100, 150)) {
+        // JavaRDD<Crush> tmp = sa.e1_distributedCrushRDD(total / p, p);
+        // sa.e2_averageCrushesPerMinute(tmp);
+        // sa.e3_averageCrushesPerMinuteEfficient(tmp);
+        // }
 
-        // sa.e2_averageCrushesPerMinuteEfficient(crushes);
+        /**
+         * E3: Efficient averaging
+         */
+        // sa.e3_averageCrushesPerMinuteEfficient(crushes);
 
-        // sa.Q4(crushes);
+        /**
+         * E4: Joins
+         */
+        /*
+         * TODO E4: Joins
+         * 
+         * Play around with execution times for different number of partitions:
+         * - Create 12 Million crushes (distributed)
+         * - Use Partitions: 2, 10, 50, 100, 150, 500
+         * - Investigate the job, stage and task structure locally (localhost:4040)
+         * - Note the times and maybe create a excel plot for time against number of partitions
+         */
+        // for (int p : Lists.newArrayList(2, 10, 50, 100, 150)) {
+        // JavaRDD<Crush> tmp = sa.e1_distributedCrushRDD(total / p, p);
+        // sa.e4_crushCompareWithJoin(tmp);
+        // sa.e5_crushCompareWithAggregation(tmp);
+        // }
 
-        // sa.Q4b(crushes);
+        /*
+         * TODO E6:
+         * 
+         * - Complete the method e6_lookupWithJoin
+         * - Run the method with 12M crushes
+         * - Investigate the job, stage and task structure locally (localhost:4040)
+         * - How many shuffles are happening with this implementation?
+         * - What might be inefficient about this implementation?
+         */
+//        sa.e6_lookupWithJoin(crushes);
 
-        // sa.Q5(crushes);
+        /**
+         * E7: Broadcasts
+         */
+//        sa.e7_lookupWithBroadcast(crushes);
 
-        // sa.Q5b(crushes);
-
+        /*
+         * In any case: sleep for 10 mins to enable exploration of the spark execution history
+         * at http://localhost:4040 after the spark jobs are finished.
+         * 
+         * Simply stop execution with your IDE's stop buttons etc.
+         */
+        System.out.println("Sleeping");
+        Thread.sleep(1000 * 60 * 10);
     }
 
     /**
      * Creates a RDD of crushes in parallel.
      * Results in parallelism x n crushes.
      * 
-     * @param parallelism
-     *            the number of partitions to create crushes at
      * @param n
      *            the number of crushes
+     * @param partitions
+     *            the number of partitions to create crushes at
      * @return
      */
-    public JavaRDD<Crush> e1_distributedCrushRDD(int parallelism, final int n) {
+    public JavaRDD<Crush> e1_distributedCrushRDD(final int n, int partitions) {
+        Timer t = Timer.start();
+
         /*
          * TODO E1: Distributed crushing
          * 
@@ -110,20 +148,31 @@ public class SparkAdvanced extends SparkBase {
          * 
          * Hint: The function "flapMap" allows to return a collection of elements that are automatically combined by spark.
          */
-        List<Integer> helperList = new ArrayList<>(parallelism);
-        for (int i = 0; i < parallelism; i++) {
+        JavaRDD<Crush> res = null;
+
+        List<Integer> helperList = new ArrayList<>(partitions);
+        for (int i = 0; i < partitions; i++) {
             helperList.add(n);
         }
-        return getJavaSparkContext().parallelize(helperList, parallelism)
-                                    .flatMap(e -> FunctionalJava.e1_crush(e).iterator())
-                                    .cache();
+        res = getJavaSparkContext().parallelize(helperList, partitions)
+                                   .flatMap(e -> FunctionalJava.e1_crush(e).iterator());
+
+        /*
+         * Additional helper code to facilitate fair comparison of runtimes in later examples - explained later.
+         * As spark is lazy as far as possible, the creation time of the crushes would count into
+         * the first evaluation. If the same RDD is used multiple times, this creates a bias (extra time) for the first use
+         */
+        res = res.cache();
+        // Counting is an action and triggers creation of the rdd and all its contents.
+        long cnt = res.count();
+        log.info("Created {} crushes over {} partitions in {}ms", cnt, res.getNumPartitions(), t.elapsedMS());
+        return res;
     }
 
     /**
      * This implements the logic that solves Q3.
      */
     public long e2_averageCrushesPerMinute(final JavaRDD<Crush> crushes) {
-
         // Measure the starting point
         Timer t = Timer.start();
 
@@ -150,23 +199,41 @@ public class SparkAdvanced extends SparkBase {
          */
         long nTimes = countsPerTime.count();
 
-        // Compute the average per minute
+        // Compute the average per minute locall on driver
         double average = nCrushes / (double) nTimes;
 
         // Measure the elapsed time and produce some classy output
         log.info("Average Candy crushes per Minute: {}, computed in {}ms. {} crushes in {} partitions", average,
-                 t.elapsedMS(), nCrushes, crushes.getNumPartitions());
+                 t.elapsedMS(), crushes.count(), crushes.getNumPartitions());
 
         return t.elapsedMS();
     }
 
     /**
-     * This method implements the logic that solves Q3, but in a way more efficient manner.
+     * This method implements the logic that solves E2, but in a way more efficient manner.
      */
     public void e3_averageCrushesPerMinuteEfficient(final JavaRDD<Crush> crushes) {
         // Measure the start time
         Timer t = Timer.start();
 
+        /*
+         * TODO E3: Efficient averaging
+         * 
+         * Implement the scenario E2 “How many blue crushes per Minute on average?” efficiently
+         * - Use the aggregateByKey and aggregate PairRDD functions
+         * - Log the results as in e2_averageCrushesPerMinute
+         * - Investigate the job, stage and task structure locally (localhost:4040)
+         * 
+         * Hints:
+         * The aggregateByKey function takes three arguments:
+         * 1. What is the initial value
+         * 2. How to combine local aggregates (pre-shuffle)
+         * 3. How to combine partition results (post-shuffle)
+         * 
+         * The same holds true for the aggregate function.
+         * 
+         * Bonus task: Add the efficient implementation to your partitioning experiment code from the last exercise and see the speedup!
+         */
         Tuple2<Integer, Integer> both =
                         // Start again with filtering the crushes of blue candies
                         crushes.filter(c -> c.getCandy().getColor() == Color.BLUE)
@@ -195,10 +262,17 @@ public class SparkAdvanced extends SparkBase {
         double average = both._2 / (double) both._1;
         // Get elapsed time and produce some output
 
-        log.info("Average Candy crushes per Minute: {}, computed in {}s", average, t.elapsedSeconds());
+        log.info("Average Candy crushes per Minute: {}, computed in {}ms (efficient way). {} crushes in {} partitions", average,
+                 t.elapsedMS(), crushes.count(), crushes.getNumPartitions());
 
     }
 
+    /**
+     * Implements the question "Who‘s crushing more horizontally striped candies than wrapped? Any how many more?"
+     * using a split & join paradigm
+     * 
+     * @param crushes
+     */
     public void e4_crushCompareWithJoin(final JavaRDD<Crush> crushes) {
         // Get the start time
         Timer tm = Timer.start();
@@ -234,17 +308,26 @@ public class SparkAdvanced extends SparkBase {
                                       .collect();
 
         // Get elapsed time and produce some output
-        log.info("Users with more striped than wrapped crushes computed in {}s", tm.elapsedSeconds());
+        log.info("Users with more striped than wrapped crushes computed in {}ms", tm.elapsedMS());
         res.forEach(r -> log.info("User {}: {} more striped than wrapped", r._1, r._2));
     }
 
+    /**
+     * Implements the question "Who‘s crushing more horizontally striped candies than wrapped? Any how many more?"
+     * using a simultaneous aggregation across the input rdd.
+     * 
+     * @param crushes
+     */
     public void e5_crushCompareWithAggregation(final JavaRDD<Crush> crushes) {
         // Get the start time
         Timer ti = Timer.start();
 
         /*
-         * This implementation computes the crushes per user per partition first and then
-         * sums up the reduced results
+         * TODO E5: Joint aggregation
+         * 
+         * Implement the logic of E4 using aggregateByKey
+         * Add the efficient implementation to your partitioning experiment code from the last exercise and compare the speedup!
+         * You can investigate the job, stage and task structure locally (localhost:4040)
          */
         List<Tuple2<String, Integer>> res =
                         // Key all data by the person doing the crushin'
@@ -269,16 +352,25 @@ public class SparkAdvanced extends SparkBase {
                                .collect();
 
         // Get elapsed time and produce some output
-        log.info("Users with more striped than wrapped crushes computed in {}s", ti.elapsedSeconds());
+        log.info("Users with more striped than wrapped crushes computed in {}ms (efficient)", ti.elapsedMS());
         res.forEach(r -> log.info("User {}: {} more striped than wrapped", r._1, r._2));
     }
 
+    /**
+     * Implements the question "How many candies are crushed in each Person‘s home town?"
+     * using a join between the crush dataset and the cities list as pair rdd.
+     * 
+     * @param crushes
+     */
     public void e6_lookupWithJoin(final JavaRDD<Crush> crushes) {
         Timer ti = Timer.start();
 
         /*
-         * Create an RDD of all the homes
+         * TODO E6: Full joins
+         * 
+         * Create a RDD from the homeCities map provided in Utils.
          */
+        // JavaPairRDD<String, String> homeRDD = null;
         List<Tuple2<String, String>> homesAsList =
                         Utils.getHomeCities()
                              .entrySet()
@@ -288,6 +380,10 @@ public class SparkAdvanced extends SparkBase {
         JavaPairRDD<String, String> homeRDD =
                         getJavaSparkContext().parallelizePairs(homesAsList);
 
+        /**
+         * Implements the question "How many candies are crushed in each Person‘s home town?"
+         * using a join on the user and later counting the crushes within each city.
+         */
         List<Tuple2<String, Integer>> res =
                         // Key the crush data by user [Transformation]
                         crushes.keyBy(Crush::getUser)
@@ -303,12 +399,12 @@ public class SparkAdvanced extends SparkBase {
                                .collect();
 
         // Get elapsed time and produce some output
-        log.info("Crushes per place computed in {}s", ti.elapsedSeconds());
+        log.info("Crushes per place computed in {}ms", ti.elapsedMS());
         res.forEach(r -> log.info("Place {}: {} crushed candies!", r._1, r._2));
     }
 
     /**
-     * Efficient implementation of the Question 5.
+     * Efficient implementation of the crushes per city question, using a broadcast of the cities map
      *
      * @param crushes
      * @param homeRDD
@@ -316,7 +412,18 @@ public class SparkAdvanced extends SparkBase {
     public void e7_lookupWithBroadcast(final JavaRDD<Crush> crushes) {
         Timer ti = Timer.start();
 
-        // Collect the "small" data of person->home associations as local map
+        /*
+         * TODO E7: Broadcasts
+         * 
+         * - Implement “How many candies are crushed in each Person‘s home town?“using a spark broadcast
+         * - Avoid using groupByKey
+         * - Investigate the job, stage and task structure locally (localhost:4040)
+         * - How is the DAG different from the previous exercise?
+         *
+         * Hints:
+         * - The java spark context provides methods to create broadcasts.
+         * - The Broadcast object can be used in transformations directly. Access it's payload with "value()"
+         */
         Map<String, String> homeMap = Utils.getHomeCities();
         // "Broadcast" the complete map to every executor
         final Broadcast<Map<String, String>> homeBC = getJavaSparkContext().broadcast(new HashMap<>(homeMap));
@@ -337,7 +444,7 @@ public class SparkAdvanced extends SparkBase {
                                .collect();
 
         // Get elapsed time and produce some output
-        log.info("Crushes per place computed in {}s", ti.elapsedSeconds());
+        log.info("Crushes per place computed in {}ms", ti.elapsedMS());
         res.forEach(r -> log.info("Place {}: {} crushed candies!", r._1, r._2));
     }
 
