@@ -46,7 +46,7 @@ public class SparkBase {
         if (session == null) {
             Builder b = SparkSession.builder();
             if (System.getenv("SPARK_YARN_STAGING_DIR") == null || !System.getenv("SPARK_YARN_STAGING_DIR").contains("abfs://hdinsight")) {
-                b.config(readFromFile("spark.conf"));
+                b.config(readFromFile("spark-complete.conf"));
             }
             session = b.getOrCreate();
         }

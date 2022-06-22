@@ -7,6 +7,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SaveMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +52,7 @@ public class SparkPersistence extends SparkBase {
           // TODO Experiment with different APPEND/OVERRIDE MODE
           // TODO APPEND/OVERRIDE MODE
           .mode("overwrite")
+                .mode(SaveMode.Append)
           .parquet(folder);
     }
 
