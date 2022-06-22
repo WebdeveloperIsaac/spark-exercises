@@ -1,27 +1,25 @@
 package de.rondiplomatico.spark.candy;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.collect.Iterables;
-
 import de.rondiplomatico.spark.candy.base.SparkBase;
 import de.rondiplomatico.spark.candy.base.Utils;
 import de.rondiplomatico.spark.candy.base.data.Candy;
 import de.rondiplomatico.spark.candy.base.data.Color;
 import de.rondiplomatico.spark.candy.base.data.Crush;
 import de.rondiplomatico.spark.candy.base.data.Deco;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Tuple2;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Exercises for the basic spark section of the course.
- * 
+ *
  * @since 2022-06-22
  * @author wirtzd
  *
@@ -39,7 +37,7 @@ public class SparkBasics extends SparkBase {
 
     /**
      * Configure your environment to run this class for section 2.
-     * 
+     *
      * @param args
      */
     public static void main(String[] args) {
@@ -69,19 +67,19 @@ public class SparkBasics extends SparkBase {
         /**
          * E4: Lookup
          */
-//        s.e4_cityLookupRDD(rdd);
+        // s.e4_cityLookupRDD(rdd);
     }
 
     /**
      * Creates a RDD of n crushes
-     * 
+     *
      * @param n
      * @return the rdd
      */
     public JavaRDD<Crush> e1_crushRDD(int n) {
         /*
          * TODO E1: Create crush RDD
-         * 
+         *
          * Use the functions from FunctionalJava to create some crushes and parallelize them using the java spark context
          */
         List<Crush> data = FunctionalJava.e1_crush(n);
@@ -91,13 +89,13 @@ public class SparkBasics extends SparkBase {
 
     /**
      * Implements the various counting questions from {@link FunctionalJava} using spark
-     * 
+     *
      * @param crushes
      */
     public void e2_countCandiesRDD(JavaRDD<Crush> crushes) {
         /*
          * TODO E2: Filtering
-         * 
+         *
          * Implement "How many red striped candies have been crushed?"
          */
         long crushedRedStriped =
@@ -111,15 +109,15 @@ public class SparkBasics extends SparkBase {
 
         /*
          * TODO E2: Filtering
-         * 
+         *
          * Count how many wrapped candies have been crushed between 12-13 o'clock and log the results
          */
         long crushedWrappedAtTime =
                         // Get the RED candies [Transformation]
                         crushes// Get the striped ones [Transformation]
                                .filter(c -> c.getCandy().getDeco().equals(Deco.WRAPPED))
-                               .filter(c -> c.getTime().getHour() >= 12 && c.getTime().getHour() <= 13)
-                               // .filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
+                               // .filter(c -> c.getTime().getHour() >= 12 && c.getTime().getHour() <= 13)
+                               .filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
                                // Count everything [Action]
                                .count();
 
@@ -128,7 +126,7 @@ public class SparkBasics extends SparkBase {
 
     /**
      * Performs various counts using spark
-     * 
+     *
      * @param crushes
      */
     public void e3_countByColorRDD(JavaRDD<Crush> crushes) {
@@ -136,9 +134,9 @@ public class SparkBasics extends SparkBase {
          * TODO E3: Grouping
          * Implement FunctionalJava-E3 using Spark!
          * - How many Candies are crushed per color?
-         * - Stick with the functional flow “group, count, collect”
+         * - Stick with the functional flow ï¿½group, count, collectï¿½
          * - Log your results.
-         * 
+         *
          * Hint: Iterables::size is convenient should you need to count the number of elements of an iterator.
          */
         JavaPairRDD<Color, Iterable<Crush>> grouped =
@@ -150,9 +148,9 @@ public class SparkBasics extends SparkBase {
 
         /*
          * TODO E3: (Bonus question)
-         * 
+         *
          * Implement "How many blue candies have been crushed per decoration type?"
-         * - Avoid the groupBy() transformation – explore what better functions are available on JavaPairRDD!
+         * - Avoid the groupBy() transformation ï¿½ explore what better functions are available on JavaPairRDD!
          * - Can you also simplify the implementation of the first question similarly?
          */
         Map<Deco, Long> quickRes2 = crushes.map(Crush::getCandy)
@@ -171,14 +169,14 @@ public class SparkBasics extends SparkBase {
 
     /**
      * Performs some statistics on crushes using spark and lookups.
-     * 
+     *
      * @param crushes
      */
     public void e4_cityLookupRDD(JavaRDD<Crush> crushes) {
 
         /*
          * TODO E4: Lookups
-         * 
+         *
          * - Understand this implementation of counting cities using a count map
          * - Run the method
          * - Investigate what might be going wrong here?
@@ -195,7 +193,7 @@ public class SparkBasics extends SparkBase {
 
         /*
          * TODO E4: Lookups
-         * 
+         *
          * Implement the counting as result of the transformation, using
          * - the class field "cities" as lookup (similar to FJ-E4)
          * - countByValue() as action
@@ -213,8 +211,8 @@ public class SparkBasics extends SparkBase {
          * Use all you've learned before.
          */
         Map<Color, Long> res3 = crushes.filter(c -> "Ismaning".equals(local.get(c.getUser())))
-                                       .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
-                                       // .filter(c -> c.asLocalTime().getHour() >= 14 && c.asLocalTime().getHour() <= 15)
+                                       // .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
+                                       .filter(c -> c.asLocalTime().getHour() >= 14 && c.asLocalTime().getHour() <= 15)
                                        .map(c -> c.getCandy().getColor())
                                        .countByValue();
 
