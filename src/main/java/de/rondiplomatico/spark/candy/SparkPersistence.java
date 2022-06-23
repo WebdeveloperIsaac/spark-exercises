@@ -1,6 +1,7 @@
 package de.rondiplomatico.spark.candy;
 
 import de.rondiplomatico.spark.candy.base.SparkBase;
+import de.rondiplomatico.spark.candy.base.Timer;
 import de.rondiplomatico.spark.candy.base.data.Crush;
 import lombok.RequiredArgsConstructor;
 import org.apache.spark.api.java.JavaRDD;
@@ -24,17 +25,17 @@ public class SparkPersistence extends SparkBase {
         SparkPersistence sp = new SparkPersistence();
 
         JavaRDD<Crush> data;
-        long x;
 
         sp.e1_writeRDD(exampleInput, getOutputDirectory() + "local", Crush.class);
 
-        x = System.currentTimeMillis();
-        data = sp.e4_readRDD(Crush.class, getOutputDirectory() + "local", "user=='H'");
-        log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
-
-        x = System.currentTimeMillis();
-        data = sp.e2_readRDD(Crush.class, getOutputDirectory() + "local").filter(e -> e.getUser().equals("H"));
-        log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), System.currentTimeMillis() - x);
+//
+//        Timer timerPostFilter = Timer.start();
+//        data = sp.e2_readRDD(Crush.class, getOutputDirectory() + "local").filter(e -> e.getUser().equals("Hans"));
+//        log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), timerPostFilter.stop());
+//
+//        Timer timerOperatorPushDown = Timer.start();
+//        data = sp.e4_readRDD(Crush.class, getOutputDirectory() + "local", "user=='Hans'");
+//        log.info("Expected: {}, Actual {}, Time {}", nData, data.count(), timerOperatorPushDown.stop());
 
     }
 
