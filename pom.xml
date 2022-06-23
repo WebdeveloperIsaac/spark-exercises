@@ -1,6 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.rondiplomatico</groupId>
 	<artifactId>spark.candy</artifactId>
@@ -25,24 +23,29 @@
 		</dependency>
 
 
-<!--	kafka	#-->
+		<!--	kafka	#-->
 		<dependency>
 			<groupId>org.apache.spark</groupId>
 			<artifactId>spark-sql-kafka-0-10_2.12</artifactId>
 			<version>3.1.1</version>
 		</dependency>
-<!--	Eventhubs	-->
+		<!--	Eventhubs	-->
 		<dependency>
 			<groupId>com.microsoft.azure</groupId>
 			<artifactId>azure-eventhubs-spark_2.12</artifactId>
 			<!-- 2.3.17 has scala 2.12 deps, so dont take. -->
 			<version>2.3.22</version>
 		</dependency>
-<!--	Azure RBAC	-->
+		<!--	Azure RBAC	-->
 		<dependency>
 			<groupId>com.azure</groupId>
 			<artifactId>azure-identity</artifactId>
 			<version>1.4.2</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.13.2</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -66,27 +69,27 @@
 					</execution>
 				</executions>
 			</plugin>
-<!--			<plugin>-->
-<!--				<groupId>org.apache.maven.plugins</groupId>-->
-<!--				<artifactId>maven-resources-plugin</artifactId>-->
-<!--				<version>3.2.0</version>-->
-<!--				<executions>-->
-<!--					<execution>-->
-<!--						<phase>install</phase>-->
-<!--					</execution>-->
-<!--				</executions>-->
-<!--				<configuration>-->
-<!--					<outputDirectory>target/upload</outputDirectory>-->
-<!--					<resources>-->
-<!--						<resource>-->
-<!--							<directory>target</directory>-->
-<!--							<includes>-->
-<!--								<include>**/*.jar</include>-->
-<!--							</includes>-->
-<!--						</resource>-->
-<!--					</resources>-->
-<!--				</configuration>-->
-<!--			</plugin>-->
+			<!--			<plugin>-->
+			<!--				<groupId>org.apache.maven.plugins</groupId>-->
+			<!--				<artifactId>maven-resources-plugin</artifactId>-->
+			<!--				<version>3.2.0</version>-->
+			<!--				<executions>-->
+			<!--					<execution>-->
+			<!--						<phase>install</phase>-->
+			<!--					</execution>-->
+			<!--				</executions>-->
+			<!--				<configuration>-->
+			<!--					<outputDirectory>target/upload</outputDirectory>-->
+			<!--					<resources>-->
+			<!--						<resource>-->
+			<!--							<directory>target</directory>-->
+			<!--							<includes>-->
+			<!--								<include>**/*.jar</include>-->
+			<!--							</includes>-->
+			<!--						</resource>-->
+			<!--					</resources>-->
+			<!--				</configuration>-->
+			<!--			</plugin>-->
 		</plugins>
 	</build>
 </project>

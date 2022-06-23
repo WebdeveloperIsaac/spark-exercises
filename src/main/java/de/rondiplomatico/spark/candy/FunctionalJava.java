@@ -76,17 +76,31 @@ public class FunctionalJava {
          * Also log how many events have been generated with log4j at the end, using the "log" logger.
          */
         for (int o = 0; o < n; o++) {
-             orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime().toNanoOfDay()));
-//            orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime()));
+            orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime().toNanoOfDay()));
+            // orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime()));
         }
-        //log.info("{} candies have been crushed!", orders.size());
+        // log.info("{} candies have been crushed!", orders.size());
 
         return orders;
     }
 
     /**
      * Performs various counts on crushed candies
-     *
+     * 
+     * 
+     * Useful links for further reference:
+     * 
+     * Java Streaming API:
+     * 
+     * @see https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html
+     * @see https://www.baeldung.com/java-8-streams
+     * @see https://stackify.com/streams-guide-java-8/
+     * 
+     *      Lambdas:
+     * 
+     * @see https://www.w3schools.com/java/java_lambda.asp
+     * @see https://docs.oracle.com/javase/tutorial/java/javaOO/lambdaexpressions.html
+     * 
      * @param data
      *            A list of crushes
      */
@@ -108,8 +122,8 @@ public class FunctionalJava {
          * Count how many wrapped candies have been crushed between 12-13 o'clock and log the results like above.
          */
         long res2 = data.stream()
-                         .filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
-//                        .filter(c -> c.getTime().getHour() >= 12 && c.getTime().getHour() <= 13)
+                        .filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
+                        // .filter(c -> c.getTime().getHour() >= 12 && c.getTime().getHour() <= 13)
                         .filter(c -> c.getCandy().getDeco().equals(Deco.WRAPPED))
                         .count();
 
@@ -214,7 +228,7 @@ public class FunctionalJava {
          */
         Map<Color, Long> res2 = data.stream()
                                     .filter(c -> "Ismaning".equals(cities.get(c.getUser())))
-//                                    .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
+                                    // .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
                                     .filter(c -> c.asLocalTime().getHour() >= 14 && c.asLocalTime().getHour() <= 15)
                                     .collect(Collectors.groupingBy(c -> c.getCandy().getColor(), Collectors.counting()));
 

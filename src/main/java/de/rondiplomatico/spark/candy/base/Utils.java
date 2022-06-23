@@ -48,6 +48,9 @@ public class Utils {
     @Getter
     private static final Map<String, String> homeCities;
 
+    /**
+     * Static initializer code for the final homeCities map.
+     */
     static {
         homeCities = new HashMap<>();
         for (String user : USERS) {
@@ -57,6 +60,13 @@ public class Utils {
         log.warn("{} users live in {} places.", homeCities.size(), CITIES.size());
     }
 
+    /**
+     * Returns a random integer between 0 (inclusive) and max (exclusive).
+     * Can be used to pick a random element of a list of size n with rand(n)
+     * 
+     * @param max
+     * @return
+     */
     private static int rand(final int max) {
         return RND.nextInt(max);
     }
