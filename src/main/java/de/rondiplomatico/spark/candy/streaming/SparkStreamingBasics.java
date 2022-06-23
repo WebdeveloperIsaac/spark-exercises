@@ -83,11 +83,7 @@ public class SparkStreamingBasics extends SparkBase {
          * Use a DataStreamWriter to start a streaming query
          * Use the format option to specify a console output
          */
-        return dataset.writeStream()
-                .format("console")
-                .option("truncate", false)
-                .outputMode(OutputMode.Append()).start()
-                ;
+        return null;
     }
 
     /**
@@ -101,17 +97,7 @@ public class SparkStreamingBasics extends SparkBase {
          * Log the timestamp and how many candies where crushed for each RateStreamSourceRecord
          * Tip: if you need an encoder getBeanEncoder(Crush.class) is your friend
          */
-        return baseStreamSource(rowsPerSecond, numPartitions)
-                .flatMap(
-                        (FlatMapFunction<RateStreamSourceRecord, Crush>) e -> {
-                            int nCrushes = (int) e.getNCrushes();
-                            List<Crush> crushList = new ArrayList<>(nCrushes);
-                            for (int i = 0; i < nCrushes; i++) {
-                                crushList.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), e.getTimestamp().getTime() / 1000));
-                            }
-//                            log.info("Crushed {} candies with Timestamp: {}", nCrushes, e.getTimestamp());
-                            return crushList.iterator();
-                        }, getBeanEncoder(Crush.class));
+        return null;
     }
 
     /**
@@ -119,7 +105,7 @@ public class SparkStreamingBasics extends SparkBase {
      */
     public Dataset<Crush> e3_filterCrushes(Dataset<Crush> crushDataset) {
         // TODO: Filter the crushes by color red
-        return crushDataset.filter((FilterFunction<Crush>) e -> Color.RED.equals(e.getCandy().getColor()));
+        return null;
     }
 
     /**
@@ -130,10 +116,7 @@ public class SparkStreamingBasics extends SparkBase {
          * TODO: Lookup the city for each crush using a broadcast
          * Use the CrushWithCity Pojo as result
          */
-        Map<String, String> homeMap = Utils.getHomeCities();
-        final Broadcast<Map<String, String>> homeBC = getJavaSparkContext().broadcast(new HashMap<>(homeMap));
-
-        return crushDataset.map((MapFunction<Crush, CrushWithCity>) e -> new CrushWithCity(e, homeBC.getValue().get(e.getUser())), getBeanEncoder(CrushWithCity.class));
+        return null;
     }
 
     @AllArgsConstructor

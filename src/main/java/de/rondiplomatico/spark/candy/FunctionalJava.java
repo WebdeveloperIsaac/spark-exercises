@@ -5,13 +5,11 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.rondiplomatico.spark.candy.base.Utils;
-import de.rondiplomatico.spark.candy.base.data.Candy;
 import de.rondiplomatico.spark.candy.base.data.Color;
 import de.rondiplomatico.spark.candy.base.data.Crush;
 import de.rondiplomatico.spark.candy.base.data.Deco;
@@ -75,11 +73,6 @@ public class FunctionalJava {
          *
          * Also log how many events have been generated with log4j at the end, using the "log" logger.
          */
-        for (int o = 0; o < n; o++) {
-            orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime().toNanoOfDay()));
-            // orders.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), Utils.randTime()));
-        }
-        // log.info("{} candies have been crushed!", orders.size());
 
         return orders;
     }
@@ -121,13 +114,7 @@ public class FunctionalJava {
          *
          * Count how many wrapped candies have been crushed between 12-13 o'clock and log the results like above.
          */
-        long res2 = data.stream()
-                        .filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
-                        // .filter(c -> c.getTime().getHour() >= 12 && c.getTime().getHour() <= 13)
-                        .filter(c -> c.getCandy().getDeco().equals(Deco.WRAPPED))
-                        .count();
-
-        log.info("The crush data contains {} wrapped striped candies that have been crushed between 12 and 13 o'clock!", res2);
+       
     }
 
     /**
@@ -160,10 +147,7 @@ public class FunctionalJava {
          *
          * Hints: The function "collect" with the "groupingBy" and downstream "counting" Collectors come in handy.
          */
-        Map<Color, Long> res2 = data.stream()
-                                    .map(Crush::getCandy)
-                                    .collect(Collectors.groupingBy(Candy::getColor, Collectors.counting()));
-        res2.forEach((c, i) -> log.info("The crush data contains {} {} candies", i, c));
+       
 
         /*
          * TODO E3: Grouping (Bonus question)
@@ -171,12 +155,7 @@ public class FunctionalJava {
          * Answer the question: "How many blue candies have been crushed per decoration type?"
          * Log your results.
          */
-        Map<Deco, Long> res3 = data.stream()
-                                   .map(Crush::getCandy)
-                                   .filter(c -> c.getColor().equals(Color.BLUE))
-                                   .collect(Collectors.groupingBy(Candy::getDeco, Collectors.counting()));
-
-        res3.forEach((c, i) -> log.info("The crush data contains {} {} blue candies", i, c));
+       
     }
 
     /**
@@ -209,11 +188,6 @@ public class FunctionalJava {
          * Implement "How may crushes per city?" using streams, map lookup and collectors.
          * Log your results.
          */
-        Map<String, Long> res = data.stream()
-                                    .map(c -> cities.get(c.getUser()))
-                                    .collect(Collectors.groupingBy(s -> s, Collectors.counting()));
-
-        res.forEach((c, i) -> log.info("There are {} crushes in {}", i, c));
 
         /**
          * Teach-In: Demonstrating the requirement of "effectively final" fields
@@ -226,13 +200,7 @@ public class FunctionalJava {
          * Implement "How many candies in Ismaning between 14-15 o'clock, counted by color?" with java streaming. Use what you have learned before to succeed.
          * Log your results.
          */
-        Map<Color, Long> res2 = data.stream()
-                                    .filter(c -> "Ismaning".equals(cities.get(c.getUser())))
-                                    // .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
-                                    .filter(c -> c.asLocalTime().getHour() >= 14 && c.asLocalTime().getHour() <= 15)
-                                    .collect(Collectors.groupingBy(c -> c.getCandy().getColor(), Collectors.counting()));
-
-        res2.forEach((c, i) -> log.info("There are {} crushes in Ismaning with {} candies", i, c));
+        
     }
 
 }

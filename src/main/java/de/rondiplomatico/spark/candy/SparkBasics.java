@@ -47,12 +47,11 @@ public class SparkBasics extends SparkBase {
         /**
          * E1: Generate crushes as RDD
          */
-        JavaRDD<Crush> rdd = s.e1_crushRDD(1234);
+        // JavaRDD<Crush> rdd = s.e1_crushRDD(1234);
 
         /*
          * TODO E1: Log the number of partitions and elements in the created RDD.
          */
-        log.info("Number of rdd partitions: {}, number of elements: {}", rdd.getNumPartitions(), rdd.count());
 
         /**
          * E2: Filtering
@@ -82,9 +81,7 @@ public class SparkBasics extends SparkBase {
          *
          * Use the functions from FunctionalJava to create some crushes and parallelize them using the java spark context
          */
-        List<Crush> data = FunctionalJava.e1_crush(n);
-        return getJavaSparkContext().parallelize(data)
-                                    .cache();
+        return null;
     }
 
     /**
@@ -98,30 +95,14 @@ public class SparkBasics extends SparkBase {
          *
          * Implement "How many red striped candies have been crushed?"
          */
-        long crushedRedStriped =
-                        // Get the RED candies [Transformation]
-                        crushes.filter(c -> c.getCandy().getColor() == Color.RED)
-                               // Get the striped ones [Transformation]
-                               .filter(c -> c.getCandy().getDeco() == Deco.HSTRIPES || c.getCandy().getDeco() == Deco.VSTRIPES)
-                               // Count everything [Action]
-                               .count();
-        log.info("Crushed {} red striped candies!", crushedRedStriped);
+       
 
         /*
          * TODO E2: Filtering
          *
          * Count how many wrapped candies have been crushed between 12-13 o'clock and log the results
          */
-        long crushedWrappedAtTime =
-                        // Get the RED candies [Transformation]
-                        crushes// Get the striped ones [Transformation]
-                               .filter(c -> c.getCandy().getDeco().equals(Deco.WRAPPED))
-                               // .filter(c -> c.getTime().getHour() >= 12 && c.getTime().getHour() <= 13)
-                               .filter(c -> c.asLocalTime().getHour() >= 12 && c.asLocalTime().getHour() <= 13)
-                               // Count everything [Action]
-                               .count();
-
-        log.info("The crush data contains {} wrapped striped candies that have been crushed between 12 and 13 o'clock!", crushedWrappedAtTime);
+       
     }
 
     /**
@@ -139,12 +120,6 @@ public class SparkBasics extends SparkBase {
          *
          * Hint: Iterables::size is convenient should you need to count the number of elements of an iterator.
          */
-        JavaPairRDD<Color, Iterable<Crush>> grouped =
-                        crushes.groupBy(d -> d.getCandy().getColor());
-        JavaPairRDD<Color, Integer> counted =
-                        grouped.mapValues(Iterables::size);
-        List<Tuple2<Color, Integer>> res = counted.collect();
-        res.forEach(t -> log.info("The crush data contains {} {} candies", t._2, t._1));
 
         /*
          * TODO E3: (Bonus question)
@@ -153,18 +128,12 @@ public class SparkBasics extends SparkBase {
          * - Avoid the groupBy() transformation - explore what better functions are available on JavaPairRDD!
          * - Can you also simplify the implementation of the first question similarly?
          */
-        Map<Deco, Long> quickRes2 = crushes.map(Crush::getCandy)
-                                           .filter(c -> c.getColor().equals(Color.BLUE))
-                                           .keyBy(Candy::getDeco)
-                                           .countByKey();
-        quickRes2.forEach((c, i) -> log.info("The crush data contains {} {} blue candies", i, c));
+        
 
         /*
          * Fast variant: Let spark do the counting!
          */
-        Map<Color, Long> quickRes = crushes.keyBy(c -> c.getCandy().getColor()) // Transformation
-                                           .countByKey(); // Action
-        quickRes.forEach((c, i) -> log.info("The crush data contains {} {} candies", i, c));
+        
     }
 
     /**
@@ -200,23 +169,13 @@ public class SparkBasics extends SparkBase {
          * - Log your results
          * - Run the code
          */
-        final Map<String, String> local = cities;
-        Map<String, Long> res2 = crushes.map(c -> local.get(c.getUser()))
-                                        .countByValue();
-        res2.forEach((c, i) -> log.info("There are {} crushes in {}", i, c));
 
         /*
          * TODO E4: Lookups
          * How many candies in Ismaning between 14-15 o'clock, counted by color?
          * Use all you've learned before.
          */
-        Map<Color, Long> res3 = crushes.filter(c -> "Ismaning".equals(local.get(c.getUser())))
-                                       // .filter(c -> c.getTime().getHour() >= 14 && c.getTime().getHour() <= 15)
-                                       .filter(c -> c.asLocalTime().getHour() >= 14 && c.asLocalTime().getHour() <= 15)
-                                       .map(c -> c.getCandy().getColor())
-                                       .countByValue();
-
-        res3.forEach((c, i) -> log.info("There are {} crushes in Ismaning with {} candies", i, c));
+        
     }
 
 }

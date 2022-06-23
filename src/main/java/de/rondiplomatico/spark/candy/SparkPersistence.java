@@ -50,7 +50,6 @@ public class SparkPersistence extends SparkBase {
          * TODO: Use the following shema to change the output directory to an azure storage account
          * <Schema>://<container_name>@<storage_account_name>.dfs.core.windows.net/<WindowsUserName>/<path>
          */
-        // return "abfss://data@stsparktraining.dfs.core.windows.net/" + USER_NAME + "/";
     }
 
     /**
@@ -66,10 +65,6 @@ public class SparkPersistence extends SparkBase {
          * TODO A: Write the dataset as parquet files to the given folder
          * TODO B: After you wrote the files successfully experiment with different SaveModes
          */
-        ds.write()
-          .mode("overwrite")
-          .mode(SaveMode.Append)
-          .parquet(folder);
     }
 
     /**
@@ -80,8 +75,6 @@ public class SparkPersistence extends SparkBase {
         /*
          * TODO: Reduce the number of files written by repartitioning the dataset
          */
-        JavaRDD<T> repartitioned = rdd.repartition(outputPartitionNum);
-        e1_writeRDD(repartitioned, folder, clazz);
     }
 
     /**
@@ -97,9 +90,7 @@ public class SparkPersistence extends SparkBase {
          * TODO: Read the parquet files from the given folder
          * Use DatasetRead from SparkSession and SparkBase.toJavaRDD()
          */
-        Dataset<Row> dataset = getSparkSession().read().parquet(folder);
-        dataset.explain();
-        return toJavaRDD(dataset, clazz);
+        return null;
     }
 
     /**
@@ -113,9 +104,7 @@ public class SparkPersistence extends SparkBase {
          * 
          * TODO B: use dataset.explain() to view the execution plan with and without operator pushdown
          */
-        Dataset<Row> dataset = getSparkSession().read().parquet(folder).filter(condition);
-        dataset.explain();
-        return toJavaRDD(dataset, clazz);
+        return null;
     }
 
     public void showCrushBeanSchema() {

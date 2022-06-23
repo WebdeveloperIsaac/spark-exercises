@@ -42,20 +42,20 @@ public class SparkStreamingAggregation extends SparkBase {
 
         Dataset<SparkStreamingBasics.CrushWithCity> withCityDataset = basics.e4_citiesLookUp(stream);
 
-        // Dataset<Row> simpleAggregationResult = aggregation.exampleSimpleAggregation(withCityDataset, "city");
-        // basics.e1_streamToConsole(simpleAggregationResult).awaitTermination();
+        Dataset<Row> simpleAggregationResult = aggregation.exampleSimpleAggregation(withCityDataset, "city");
+        basics.e1_streamToConsole(simpleAggregationResult).awaitTermination();
 
-        Dataset<Row> windowedAggregation = aggregation.exampleWindowedAggregation(withCityDataset, "city");
-        basics.e1_streamToConsole(windowedAggregation).awaitTermination();
+        // Dataset<Row> windowedAggregation = aggregation.exampleWindowedAggregation(withCityDataset, "city");
+        // basics.e1_streamToConsole(windowedAggregation).awaitTermination();
         //
         // Dataset<Row> windowedWithWatermarkAggregation = aggregation.exampleWindowedWithWatermarkAggregation(withCityDataset, "city");
         // basics.e1_streamToConsole(windowedWithWatermarkAggregation).awaitTermination();
         //
         // Dataset<Result> customTimeAggregation = aggregation.exampleCustomTimeAggregation(withCityDataset);
         // basics.e1_streamToConsole(customTimeAggregation).awaitTermination();
-
-        Dataset<Result> customCrushAggregation = aggregation.exampleCustomCrushAggregation(withCityDataset);
-        basics.e1_streamToConsole(customCrushAggregation).awaitTermination();
+        //
+        // Dataset<Result> customCrushAggregation = aggregation.exampleCustomCrushAggregation(withCityDataset);
+        // basics.e1_streamToConsole(customCrushAggregation).awaitTermination();
     }
 
     /**
@@ -271,6 +271,7 @@ public class SparkStreamingAggregation extends SparkBase {
     private static CrushWithCityAndTimestamp wrap(CrushWithCity c) {
         return new CrushWithCityAndTimestamp(new Timestamp(c.getCrush()
                                                             .getTime()
+                                                            .toNanoOfDay()
                         * 1000), c.getCrush(), c.getCity());
     }
 }

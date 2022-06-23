@@ -26,15 +26,9 @@ public class SparkStreamingKafka extends SparkBase {
         // TODO: Producer; send Crush Messages to Kafka
         // Filter by color
 
-        Dataset<Crush> stream = basics.e2_candySource(1, 2);
-        kafka.streamToKafka(stream).awaitTermination();
-
         // TODO: Consumer read messages from Kafka
         // Feedback if only one Color arrives
         // Experiment with the checkpoint location in or Aggregation functions
-
-        Dataset<Crush> kafkaDataset = kafka.streamFromKafka(Crush.class);
-        basics.e1_streamToConsole(kafkaDataset).awaitTermination();
     }
 
     private Map<String, String> getKafkaOptions() {

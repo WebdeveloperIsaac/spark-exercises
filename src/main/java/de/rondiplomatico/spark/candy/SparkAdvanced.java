@@ -72,11 +72,6 @@ public class SparkAdvanced extends SparkBase {
          * 
          * Bonus task: Also vary the data size on top of the number of partitions!
          */
-        for (int p : Lists.newArrayList(2, 10, 50, 100, 150)) {
-            JavaRDD<Crush> tmp = sa.e1_distributedCrushRDD(total / p, p);
-            sa.e2_averageCrushesPerMinute(tmp);
-            sa.e3_averageCrushesPerMinuteEfficient(tmp);
-        }
 
         /**
          * E3: Efficient averaging
@@ -95,11 +90,6 @@ public class SparkAdvanced extends SparkBase {
          * - Investigate the job, stage and task structure locally (localhost:4040)
          * - Note the times and maybe create a excel plot for time against number of partitions
          */
-        for (int p : Lists.newArrayList(2, 10, 50, 100, 150)) {
-            JavaRDD<Crush> tmp = sa.e1_distributedCrushRDD(total / p, p);
-            sa.e4_crushCompareWithJoin(tmp);
-            sa.e5_crushCompareWithAggregation(tmp);
-        }
 
         /*
          * TODO E6:
@@ -151,12 +141,7 @@ public class SparkAdvanced extends SparkBase {
          */
         JavaRDD<Crush> res = null;
 
-        List<Integer> helperList = new ArrayList<>(partitions);
-        for (int i = 0; i < partitions; i++) {
-            helperList.add(n);
-        }
-        res = getJavaSparkContext().parallelize(helperList, partitions)
-                                   .flatMap(e -> FunctionalJava.e1_crush(e).iterator());
+        
 
         /*
          * Additional helper code to facilitate fair comparison of runtimes in later examples - explained later.
@@ -235,36 +220,7 @@ public class SparkAdvanced extends SparkBase {
          * 
          * Bonus task: Add the efficient implementation to your partitioning experiment code from the last exercise and see the speedup!
          */
-        Tuple2<Integer, Integer> both =
-                        // Start again with filtering the crushes of blue candies
-                        crushes.filter(c -> c.getCandy().getColor() == Color.BLUE)
-                               // Key each crush by its time
-                               .keyBy(Crush::getTime)
-                               /*
-                                * Here starts part 1 of the magic:
-                                * We locally (i.e. per partition on each worker) compute the number of
-                                * crushes per each distinct time found in the respective partition,
-                                * and then merge the counted crushes per global time instances.
-                                */
-                               .aggregateByKey(0,
-                                               (ex, n) -> ex + 1,
-                                               (a, b) -> a + b)
-                               /*
-                                * Part 2 of the magic:
-                                * Iterate once over all the data, counting and summarizing at the same time.
-                                * This is done by incrementing a first "counter" by one for each data,
-                                * and summing up the counted values at the same time.
-                                */
-                               .aggregate(new Tuple2<>(0, 0),
-                                          (agg, n) -> new Tuple2<>(agg._1 + 1, agg._2 + n._2),
-                                          (p1, p2) -> new Tuple2<>(p1._1 + p2._1, p1._2 + p2._2));
-
-        // Compute average
-        double average = both._2 / (double) both._1;
-        // Get elapsed time and produce some output
-
-        log.info("Average Candy crushes per Minute: {}, computed in {}ms (efficient way). {} crushes in {} partitions", average,
-                 t.elapsedMS(), crushes.count(), crushes.getNumPartitions());
+       
 
     }
 
@@ -330,31 +286,7 @@ public class SparkAdvanced extends SparkBase {
          * Add the efficient implementation to your partitioning experiment code from the last exercise and compare the speedup!
          * You can investigate the job, stage and task structure locally (localhost:4040)
          */
-        List<Tuple2<String, Integer>> res =
-                        // Key all data by the person doing the crushin'
-                        crushes.keyBy(Crush::getUser)
-                               /*
-                                * Count the candies matching the two criteria per person,
-                                * but at first locally per partition and then sum up the reduced results
-                                */
-                               .aggregateByKey(new Tuple2<>(0, 0),
-                                               (ex, c) -> {
-                                                   int str = c.getCandy().getDeco() == Deco.HSTRIPES ? 1 : 0;
-                                                   int wrap = c.getCandy().getDeco() == Deco.WRAPPED ? 1 : 0;
-                                                   return str > 0 || wrap > 0 ? new Tuple2<>(ex._1 + str, ex._2 + wrap) : ex;
-                                               },
-                                               (a, b) -> new Tuple2<>(a._1 + b._1, a._2 + b._2))
-                               /*
-                                * Same as other solution - compute the difference and select
-                                * the requested cases
-                                */
-                               .mapValues(t -> t._1 - t._2)
-                               .filter(t -> t._2 > 0)
-                               .collect();
-
-        // Get elapsed time and produce some output
-        log.info("Users with more striped than wrapped crushes computed in {}ms (efficient)", ti.elapsedMS());
-        res.forEach(r -> log.info("User {}: {} more striped than wrapped", r._1, r._2));
+      
     }
 
     /**
@@ -371,15 +303,8 @@ public class SparkAdvanced extends SparkBase {
          * 
          * Create a RDD from the homeCities map provided in Utils.
          */
-        // JavaPairRDD<String, String> homeRDD = null;
-        List<Tuple2<String, String>> homesAsList =
-                        Utils.getHomeCities()
-                             .entrySet()
-                             .stream()
-                             .map(e -> new Tuple2<>(e.getKey(), e.getValue()))
-                             .collect(Collectors.toList());
-        JavaPairRDD<String, String> homeRDD =
-                        getJavaSparkContext().parallelizePairs(homesAsList);
+        JavaPairRDD<String, String> homeRDD = null;
+       
 
         /**
          * Implements the question "How many candies are crushed in each Person�s home town?"
@@ -425,28 +350,7 @@ public class SparkAdvanced extends SparkBase {
          * - The java spark context provides methods to create broadcasts.
          * - The Broadcast object can be used in transformations directly. Access it's payload with "value()"
          */
-        Map<String, String> homeMap = Utils.getHomeCities();
-        // "Broadcast" the complete map to every executor
-        final Broadcast<Map<String, String>> homeBC = getJavaSparkContext().broadcast(new HashMap<>(homeMap));
-
-        List<Tuple2<String, Integer>> res =
-                        /*
-                         * Directly map the crushes to the respective person's home and set a count of 1.
-                         *
-                         * The broadcast is used to obtain the home for the person - no shuffling but a direct O(1)
-                         * HashMap lookup!
-                         *
-                         * [Transformation]
-                         */
-                        crushes.mapToPair(c -> new Tuple2<>(homeBC.value().get(c.getUser()), 1))
-                               // Reduce the number of counts per Place [Transformation]
-                               .reduceByKey((a, b) -> a + b)
-                               // Collect the result [Action]
-                               .collect();
-
-        // Get elapsed time and produce some output
-        log.info("Crushes per place computed in {}ms", ti.elapsedMS());
-        res.forEach(r -> log.info("Place {}: {} crushed candies!", r._1, r._2));
+        
     }
 
 }
