@@ -57,6 +57,12 @@ public class SparkStreamingBasics extends SparkBase {
 //        q.awaitTermination();
     }
 
+    /**
+     * This Methods creates a streaming Dataset using a rate stream source,
+     * The Dataset<Row> of the spark rate stream is encoded using a custom Pojo
+     * @param rowsPerSecond data rows per second
+     * @param numPartitions num partitions the data is distributed to
+     */
     public Dataset<RateStreamSourceRecord> baseStreamSource(int rowsPerSecond, int numPartitions) {
         return getSparkSession()
                 .readStream()
@@ -80,13 +86,21 @@ public class SparkStreamingBasics extends SparkBase {
         return dataset.writeStream()
                 .format("console")
                 .option("truncate", false)
-                .option("checkpointLocation", "streaming/checkpoint/" + System.currentTimeMillis())
-//                .outputMode(OutputMode.Append()).start()
-                .outputMode(OutputMode.Complete()).start()
+                .outputMode(OutputMode.Append()).start()
                 ;
     }
 
+    /**
+     * Uses the {@link #baseStreamSource(int, int)} and transform it's output to a candy source
+     */
     public Dataset<Crush> e2_candySource(int rowsPerSecond, int numPartitions) {
+        /*
+         * TODO:
+         * Use the baseStreamSource and transform the Dataset<RateStreamSourceRecord> to a dataset<Crush>
+         * Use the timestamp as crush timestamp and nCrushes as number of crushes for each RateStreamSourceRecord
+         * Log the timestamp and how many candies where crushed for each RateStreamSourceRecord
+         * Tip: if you need an encoder getBeanEncoder(Crush.class) is your friend
+         */
         return baseStreamSource(rowsPerSecond, numPartitions)
                 .flatMap(
                         (FlatMapFunction<RateStreamSourceRecord, Crush>) e -> {
@@ -100,12 +114,22 @@ public class SparkStreamingBasics extends SparkBase {
                         }, getBeanEncoder(Crush.class));
     }
 
+    /**
+     * Filters the streaming dataset of crushes by color RED
+     */
     public Dataset<Crush> e3_filterCrushes(Dataset<Crush> crushDataset) {
+        // TODO: Filter the crushes by color red
         return crushDataset.filter((FilterFunction<Crush>) e -> Color.RED.equals(e.getCandy().getColor()));
     }
 
+    /**
+     * Add the city information to each crush using a broadcast, a custom Pojo containing the crush and the city is returned
+     */
     public Dataset<CrushWithCity> e4_citiesLookUp(Dataset<Crush> crushDataset) {
-
+        /*
+         * TODO: Lookup the city for each crush using a broadcast
+         * Use the CrushWithCity Pojo as result
+         */
         Map<String, String> homeMap = Utils.getHomeCities();
         final Broadcast<Map<String, String>> homeBC = getJavaSparkContext().broadcast(new HashMap<>(homeMap));
 
