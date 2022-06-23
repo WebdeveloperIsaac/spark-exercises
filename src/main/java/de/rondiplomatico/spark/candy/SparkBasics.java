@@ -134,7 +134,7 @@ public class SparkBasics extends SparkBase {
          * TODO E3: Grouping
          * Implement FunctionalJava-E3 using Spark!
          * - How many Candies are crushed per color?
-         * - Stick with the functional flow �group, count, collect�
+         * - Stick with the functional flow "group, count, collect"
          * - Log your results.
          *
          * Hint: Iterables::size is convenient should you need to count the number of elements of an iterator.
@@ -150,7 +150,7 @@ public class SparkBasics extends SparkBase {
          * TODO E3: (Bonus question)
          *
          * Implement "How many blue candies have been crushed per decoration type?"
-         * - Avoid the groupBy() transformation � explore what better functions are available on JavaPairRDD!
+         * - Avoid the groupBy() transformation - explore what better functions are available on JavaPairRDD!
          * - Can you also simplify the implementation of the first question similarly?
          */
         Map<Deco, Long> quickRes2 = crushes.map(Crush::getCandy)

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 import de.rondiplomatico.spark.candy.base.SparkBase;
 import de.rondiplomatico.spark.candy.base.Timer;
@@ -49,7 +50,7 @@ public class SparkAdvanced extends SparkBase {
         /**
          * E1: Creating distributed crushes
          */
-//        JavaRDD<Crush> crushes = sa.e1_distributedCrushRDD(total / 150, 150);
+        // JavaRDD<Crush> crushes = sa.e1_distributedCrushRDD(total / 150, 150);
 
         /**
          * E2: Averaging
@@ -71,11 +72,11 @@ public class SparkAdvanced extends SparkBase {
          * 
          * Bonus task: Also vary the data size on top of the number of partitions!
          */
-        // for (int p : Lists.newArrayList(2, 10, 50, 100, 150)) {
-        // JavaRDD<Crush> tmp = sa.e1_distributedCrushRDD(total / p, p);
-        // sa.e2_averageCrushesPerMinute(tmp);
-        // sa.e3_averageCrushesPerMinuteEfficient(tmp);
-        // }
+        for (int p : Lists.newArrayList(2, 10, 50, 100, 150)) {
+            JavaRDD<Crush> tmp = sa.e1_distributedCrushRDD(total / p, p);
+            sa.e2_averageCrushesPerMinute(tmp);
+            sa.e3_averageCrushesPerMinuteEfficient(tmp);
+        }
 
         /**
          * E3: Efficient averaging
@@ -94,11 +95,11 @@ public class SparkAdvanced extends SparkBase {
          * - Investigate the job, stage and task structure locally (localhost:4040)
          * - Note the times and maybe create a excel plot for time against number of partitions
          */
-        // for (int p : Lists.newArrayList(2, 10, 50, 100, 150)) {
-        // JavaRDD<Crush> tmp = sa.e1_distributedCrushRDD(total / p, p);
-        // sa.e4_crushCompareWithJoin(tmp);
-        // sa.e5_crushCompareWithAggregation(tmp);
-        // }
+        for (int p : Lists.newArrayList(2, 10, 50, 100, 150)) {
+            JavaRDD<Crush> tmp = sa.e1_distributedCrushRDD(total / p, p);
+            sa.e4_crushCompareWithJoin(tmp);
+            sa.e5_crushCompareWithAggregation(tmp);
+        }
 
         /*
          * TODO E6:
@@ -109,12 +110,12 @@ public class SparkAdvanced extends SparkBase {
          * - How many shuffles are happening with this implementation?
          * - What might be inefficient about this implementation?
          */
-//        sa.e6_lookupWithJoin(crushes);
+        // sa.e6_lookupWithJoin(crushes);
 
         /**
          * E7: Broadcasts
          */
-//        sa.e7_lookupWithBroadcast(crushes);
+        // sa.e7_lookupWithBroadcast(crushes);
 
         /*
          * In any case: sleep for 10 mins to enable exploration of the spark execution history
@@ -219,7 +220,7 @@ public class SparkAdvanced extends SparkBase {
         /*
          * TODO E3: Efficient averaging
          * 
-         * Implement the scenario E2 “How many blue crushes per Minute on average?” efficiently
+         * Implement the scenario E2 "How many blue crushes per Minute on average?" efficiently
          * - Use the aggregateByKey and aggregate PairRDD functions
          * - Log the results as in e2_averageCrushesPerMinute
          * - Investigate the job, stage and task structure locally (localhost:4040)
@@ -268,7 +269,7 @@ public class SparkAdvanced extends SparkBase {
     }
 
     /**
-     * Implements the question "Who‘s crushing more horizontally striped candies than wrapped? Any how many more?"
+     * Implements the question "Whoï¿½s crushing more horizontally striped candies than wrapped? Any how many more?"
      * using a split & join paradigm
      * 
      * @param crushes
@@ -313,7 +314,7 @@ public class SparkAdvanced extends SparkBase {
     }
 
     /**
-     * Implements the question "Who‘s crushing more horizontally striped candies than wrapped? Any how many more?"
+     * Implements the question "Whoï¿½s crushing more horizontally striped candies than wrapped? Any how many more?"
      * using a simultaneous aggregation across the input rdd.
      * 
      * @param crushes
@@ -357,7 +358,7 @@ public class SparkAdvanced extends SparkBase {
     }
 
     /**
-     * Implements the question "How many candies are crushed in each Person‘s home town?"
+     * Implements the question "How many candies are crushed in each Personï¿½s home town?"
      * using a join between the crush dataset and the cities list as pair rdd.
      * 
      * @param crushes
@@ -381,7 +382,7 @@ public class SparkAdvanced extends SparkBase {
                         getJavaSparkContext().parallelizePairs(homesAsList);
 
         /**
-         * Implements the question "How many candies are crushed in each Person‘s home town?"
+         * Implements the question "How many candies are crushed in each Personï¿½s home town?"
          * using a join on the user and later counting the crushes within each city.
          */
         List<Tuple2<String, Integer>> res =
@@ -415,7 +416,7 @@ public class SparkAdvanced extends SparkBase {
         /*
          * TODO E7: Broadcasts
          * 
-         * - Implement “How many candies are crushed in each Person‘s home town?“using a spark broadcast
+         * - Implement "How many candies are crushed in each Person's home town?" using a spark broadcast
          * - Avoid using groupByKey
          * - Investigate the job, stage and task structure locally (localhost:4040)
          * - How is the DAG different from the previous exercise?
