@@ -17,6 +17,10 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.SparkSession.Builder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import de.rondiplomatico.spark.candy.SparkBasics;
 
 /**
  * This is the base class providing convenience access to the spark environment.
@@ -27,6 +31,8 @@ import org.apache.spark.sql.SparkSession.Builder;
  *
  */
 public class SparkBase {
+
+    private static final Logger log = LoggerFactory.getLogger(SparkBase.class);
 
     /**
      * Pattern used to match variables in spark config files.
@@ -88,8 +94,6 @@ public class SparkBase {
      * Reads all entries from the provided Properties and replaces any variable matching the pattern {@link VAR_PATTERN} by corresponding environment variables.
      * 
      * @param conf
-     * @throws LearningException
-     *             if no environment variable is found for a declared variable
      */
     private static void parseEnvironmentVariables(Properties conf) {
         final Pattern variablePattern = Pattern.compile(VAR_PATTERN);
@@ -103,8 +107,9 @@ public class SparkBase {
                 output.append(value, lastIndex, m.start());
                 String envVar = System.getenv(m.group("variable"));
                 if (envVar == null) {
-                    throw new LearningException("Environment variable " + m.group("variable") + " required for property " + t.getKey()
-                                    + ", but is not set.");
+                    log.error("Environment variable {} required for property {}, but is not set. Variable pattern: {}",
+                              m.group("variable"), t.getKey(),
+                              variablePattern);
                 }
                 output.append(envVar);
                 lastIndex = m.end();
