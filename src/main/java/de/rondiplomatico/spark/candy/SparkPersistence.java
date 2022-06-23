@@ -38,39 +38,80 @@ public class SparkPersistence extends SparkBase {
 
     }
 
+    /**
+     * Used to switch the output directory betwenn local and cloud storage
+     */
     public static String getOutputDirectory() {
         // Without any scheme, the string will be interpreted relative to the current working directory using the default file system
-//        return "localOut";
+        return "localOut";
 
-        // <Schema>://<container_name>@<storage_account_name>.dfs.core.windows.net/<WindowsUserName>/<path>
-         return "abfss://data@stsparktraining.dfs.core.windows.net/" + USER_NAME + "/";
+        /*
+         * TODO: Use the following shema to change the output directory to an azure storage account
+         * <Schema>://<container_name>@<storage_account_name>.dfs.core.windows.net/<WindowsUserName>/<path>
+         */
+        // return "abfss://data@stsparktraining.dfs.core.windows.net/" + USER_NAME + "/";
     }
 
+    /**
+     * Writes an RDD to a specified output folder;
+     *
+     * @param clazz
+     *            clazz specifying the type of the rdd
+     */
     public <T> void e1_writeRDD(JavaRDD<T> rdd, String folder, Class<T> clazz) {
         Dataset<T> ds = toDataset(rdd, clazz);
+
+        /*
+         * TODO A: Write the dataset as parquet files to the given folder
+         * TODO B: After you wrote the files successfully experiment with different SaveModes
+         */
         ds.write()
-          // TODO Experiment with different APPEND/OVERRIDE MODE
-          // TODO APPEND/OVERRIDE MODE
           .mode("overwrite")
-                .mode(SaveMode.Append)
+          .mode(SaveMode.Append)
           .parquet(folder);
     }
 
-    // TODO add e1_writeRDD(JavaRDD<T> rdd, String folder, Class<T> clazz, int outputPartitionNum)
+    /**
+     * Repartitions the dataset to reduce the number of files written
+     * {@link #e1_writeRDD(JavaRDD, String, Class)}
+     */
     public <T> void e1_writeRDD(JavaRDD<T> rdd, String folder, Class<T> clazz, int outputPartitionNum) {
+        /*
+         * TODO: Reduce the number of files written by repartitioning the dataset
+         */
         JavaRDD<T> repartitioned = rdd.repartition(outputPartitionNum);
         e1_writeRDD(repartitioned, folder, clazz);
     }
 
-    // TODO Use DatasetRead from SparkSession and SparkBase.toJavaRDD()
+    /**
+     * Reads data from a given folder and returns a JavaRDD
+     *
+     * @param clazz
+     *            clazz specifying the data type
+     * @param folder
+     *            data location
+     */
     public <T> JavaRDD<T> e2_readRDD(Class<T> clazz, String folder) {
+        /*
+         * TODO: Read the parquet files from the given folder
+         * Use DatasetRead from SparkSession and SparkBase.toJavaRDD()
+         */
         Dataset<Row> dataset = getSparkSession().read().parquet(folder);
         dataset.explain();
         return toJavaRDD(dataset, clazz);
     }
 
-    // TODO Filter the dataset
+    /**
+     * Reads data from a given folder and returns a JavaRDD
+     * Operator Pushdown is used to filter the data by the filesystem
+     */
     public <T> JavaRDD<T> e4_readRDD(Class<T> clazz, String folder, String condition) {
+        /*
+         * TODO A: Use a sql filter directly on the read dataset to allow for operator pushdown
+         * Everything else is similar to e2_readRDD
+         * 
+         * TODO B: use dataset.explain() to view the execution plan with and without operator pushdown
+         */
         Dataset<Row> dataset = getSparkSession().read().parquet(folder).filter(condition);
         dataset.explain();
         return toJavaRDD(dataset, clazz);
