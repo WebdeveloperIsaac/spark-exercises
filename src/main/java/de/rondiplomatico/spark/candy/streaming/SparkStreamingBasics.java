@@ -67,12 +67,22 @@ public class SparkStreamingBasics extends SparkBase {
                 .map((MapFunction<Row, RateStreamSourceRecord>) e -> new RateStreamSourceRecord(e.getLong(1), e.getTimestamp(0), e.getLong(1) % 10), Encoders.bean(RateStreamSourceRecord.class));
     }
 
+    /**
+     * Writes a streaming dataset to console
+     *
+     * @return streaming query
+     */
     public <T> StreamingQuery e1_streamToConsole(Dataset<T> dataset) throws TimeoutException {
+        /*
+         * Use a DataStreamWriter to start a streaming query
+         * Use the format option to specify a console output
+         */
         return dataset.writeStream()
                 .format("console")
                 .option("truncate", false)
                 .option("checkpointLocation", "streaming/checkpoint/" + System.currentTimeMillis())
-                .outputMode(OutputMode.Append()).start()
+//                .outputMode(OutputMode.Append()).start()
+                .outputMode(OutputMode.Complete()).start()
                 ;
     }
 

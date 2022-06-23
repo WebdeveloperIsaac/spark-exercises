@@ -40,10 +40,10 @@ public class SparkPersistence extends SparkBase {
 
     public static String getOutputDirectory() {
         // Without any scheme, the string will be interpreted relative to the current working directory using the default file system
-        return "localOut";
+//        return "localOut";
 
-        // <Schema>://<container_name>@<storage_account_name>.dfs.core.windows.net/<local_path>
-        // return "abfss://data@stsparktraining.dfs.core.windows.net/" + USER_NAME + "/";
+        // <Schema>://<container_name>@<storage_account_name>.dfs.core.windows.net/<WindowsUserName>/<path>
+         return "abfss://data@stsparktraining.dfs.core.windows.net/" + USER_NAME + "/";
     }
 
     public <T> void e1_writeRDD(JavaRDD<T> rdd, String folder, Class<T> clazz) {

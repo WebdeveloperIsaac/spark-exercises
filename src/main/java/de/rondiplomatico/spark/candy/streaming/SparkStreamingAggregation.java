@@ -41,11 +41,17 @@ public class SparkStreamingAggregation extends SparkBase {
 
         Dataset<SparkStreamingBasics.CrushWithCity> withCityDataset = basics.e4_citiesLookUp(stream);
 
-        Dataset<Row> simpleAggregationResult = aggregation.exampleSimpleAggregation(withCityDataset, "city");
-        basics.e1_streamToConsole(simpleAggregationResult).awaitTermination();
+//        Dataset<Row> simpleAggregationResult = aggregation.exampleSimpleAggregation(withCityDataset, "city");
+//        basics.e1_streamToConsole(simpleAggregationResult).awaitTermination();
 
 
-        Dataset<Result> complexAggregationResult = aggregation.exampleComplexAggregation(withCityDataset);
+        Dataset<Row> windowedAggregation = aggregation.exampleWindowedAggregation(withCityDataset, "city");
+        basics.e1_streamToConsole(windowedAggregation).awaitTermination();
+
+        Dataset<Row> windowedWithWatermarkAggregation = aggregation.exampleWindowedWithWatermarkAggregation(withCityDataset, "city");
+        basics.e1_streamToConsole(windowedWithWatermarkAggregation).awaitTermination();
+
+        Dataset<Result> complexAggregationResult = aggregation.exampleCustomAggregation(withCityDataset);
         basics.e1_streamToConsole(complexAggregationResult).awaitTermination();
     }
 
@@ -62,7 +68,31 @@ public class SparkStreamingAggregation extends SparkBase {
         *
          */
         return crushDataset
-                .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndWatermark>) e -> new CrushWithCityAndWatermark(new Timestamp(e.getCrush().getTime() * 1000), e.getCrush(), e.getCity()), getBeanEncoder(CrushWithCityAndWatermark.class))
+                .groupBy(
+                        functions.col(by)
+                ).count();
+    }
+
+    public Dataset<Row> exampleWindowedAggregation(Dataset<SparkStreamingBasics.CrushWithCity> crushDataset, String by) {
+        /*
+         * Experiment with watermarking and windowing see spark docu
+         *
+         */
+        return crushDataset
+                .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndTimestamp>) e -> new CrushWithCityAndTimestamp(new Timestamp(e.getCrush().getTime() * 1000), e.getCrush(), e.getCity()), getBeanEncoder(CrushWithCityAndTimestamp.class))
+                .groupBy(
+                        functions.window(col("ts"), "30 seconds"),
+                        functions.col(by)
+                ).count();
+    }
+
+    public Dataset<Row> exampleWindowedWithWatermarkAggregation(Dataset<SparkStreamingBasics.CrushWithCity> crushDataset, String by) {
+        /*
+         * Experiment with watermarking and windowing see spark docu
+         *
+         */
+        return crushDataset
+                .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndTimestamp>) e -> new CrushWithCityAndTimestamp(new Timestamp(e.getCrush().getTime() * 1000), e.getCrush(), e.getCity()), getBeanEncoder(CrushWithCityAndTimestamp.class))
                 .withWatermark("ts", "30 seconds")
                 .groupBy(
                         functions.window(col("ts"), "30 seconds"),
@@ -70,19 +100,19 @@ public class SparkStreamingAggregation extends SparkBase {
                 ).count();
     }
 
-    public Dataset<Result> exampleComplexAggregation(Dataset<SparkStreamingBasics.CrushWithCity> crushDataset) {
+    public Dataset<Result> exampleCustomAggregation(Dataset<SparkStreamingBasics.CrushWithCity> crushDataset) {
         final ComplexAggregation func = new ComplexAggregation();
         return crushDataset
-                .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndWatermark>) e -> new CrushWithCityAndWatermark(new Timestamp(e.getCrush().getTime() * 1000), e.getCrush(), e.getCity()), getBeanEncoder(CrushWithCityAndWatermark.class))
+                .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndTimestamp>) e -> new CrushWithCityAndTimestamp(new Timestamp(e.getCrush().getTime() * 1000), e.getCrush(), e.getCity()), getBeanEncoder(CrushWithCityAndTimestamp.class))
                 .withWatermark("ts", "30 seconds")
-                .groupByKey((MapFunction<CrushWithCityAndWatermark, String>) CrushWithCityAndWatermark::getCity, getBeanEncoder(String.class))
+                .groupByKey((MapFunction<CrushWithCityAndTimestamp, String>) CrushWithCityAndTimestamp::getCity, getBeanEncoder(String.class))
                 .flatMapGroupsWithState(func, OutputMode.Append(),  Encoders.kryo(State.class), getBeanEncoder(Result.class), GroupStateTimeout.NoTimeout());
     }
 
-    public static class ComplexAggregation implements FlatMapGroupsWithStateFunction<String, CrushWithCityAndWatermark, State, Result> {
+    public static class ComplexAggregation implements FlatMapGroupsWithStateFunction<String, CrushWithCityAndTimestamp, State, Result> {
 
         @Override
-        public Iterator<Result> call(String key, Iterator<CrushWithCityAndWatermark> values, GroupState<State> state) {
+        public Iterator<Result> call(String key, Iterator<CrushWithCityAndTimestamp> values, GroupState<State> state) {
 
             log.info("Working on key: {}, time: {}, state: {}", key, state.getCurrentWatermarkMs(), state);
 
@@ -114,7 +144,7 @@ public class SparkStreamingAggregation extends SparkBase {
         private String city;
         private Map<String, Integer> usersCounter;
 
-        public void add(Iterator<CrushWithCityAndWatermark> v) {
+        public void add(Iterator<CrushWithCityAndTimestamp> v) {
             v.forEachRemaining(e -> {
                 int counter = usersCounter.getOrDefault(e.getCrush().getUser(),0);
                 usersCounter.put(e.getCrush().getUser(), counter + 1);
@@ -137,7 +167,7 @@ public class SparkStreamingAggregation extends SparkBase {
     @NoArgsConstructor
     @Data
     @Getter
-    public static class CrushWithCityAndWatermark implements Serializable {
+    public static class CrushWithCityAndTimestamp implements Serializable {
         private Timestamp ts;
         private Crush crush;
         private String city;
