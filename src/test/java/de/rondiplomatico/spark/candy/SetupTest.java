@@ -4,17 +4,21 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.spark.sql.Encoders;
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Test;
 
 import de.rondiplomatico.spark.candy.base.SparkBase;
 
+/**
+ * Simple quick test to see if you local spark setup is up & running.
+ * @author wirtzd
+ *
+ */
 public class SetupTest extends SparkBase {
 
     @Test
@@ -26,21 +30,19 @@ public class SetupTest extends SparkBase {
             data.add(r.nextInt());
         }
 
-        getSparkSession().createDataFrame(getJavaSparkContext().parallelize(data), Integer.class)
-                         .write()
-                         .parquet("testout");
+        toDataset(getJavaSparkContext().parallelize(data), Integer.class).write()
+                                                                         .parquet("testout");
 
-        List<Integer> res = getSparkSession().read()
-                                             .parquet("testout")
-                                             .as(Encoders.INT())
-                                             .collectAsList();
+        List<Integer> res = toJavaRDD(getSparkSession().read()
+                                                       .parquet("testout"),
+                                      Integer.class).collect();
 
         assertEquals("Written data could not be read and is equal", data, res);
     }
 
     @After
     public void cleanUp() throws IOException {
-        Files.delete(new File("testout").toPath());
+        FileUtils.deleteDirectory(new File("testout"));
     }
 
 }
