@@ -21,21 +21,20 @@ public class SparkStreamingKafka extends SparkBase {
 
     public static void main(String[] args) throws TimeoutException, StreamingQueryException {
         SparkStreamingBasics basics = new SparkStreamingBasics();
-
-        Dataset<Crush> stream = basics.e2_candySource(1, 2);
-
-        // Producer; send Messages to Kafka
-        // Filter by color
-
-        // Consumer read messages from Kafka
-        // Feedback if only one Color arrives
-        // Expirement
-
         SparkStreamingKafka kafka = new SparkStreamingKafka();
 
+        // TODO: Producer; send Crush Messages to Kafka
+        // Filter by color
+
+        Dataset<Crush> stream = basics.e2_candySource(1, 2);
         kafka.streamToKafka(stream).awaitTermination();
 
-        basics.e1_streamToConsole(kafka.streamFromKafka(Crush.class)).awaitTermination();
+        // TODO: Consumer read messages from Kafka
+        // Feedback if only one Color arrives
+        // Experiment with the checkpoint location in or Aggregation functions
+
+        Dataset<Crush> kafkaDataset = kafka.streamFromKafka(Crush.class);
+        basics.e1_streamToConsole(kafkaDataset).awaitTermination();
     }
 
     private Map<String, String> getKafkaOptions() {
