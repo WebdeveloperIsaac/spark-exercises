@@ -109,7 +109,7 @@ public class SparkStreamingBasics extends SparkBase {
                             for (int i = 0; i < nCrushes; i++) {
                                 crushList.add(new Crush(new Candy(Utils.randColor(), Utils.randDeco()), Utils.randUser(), e.getTimestamp().getTime() / 1000));
                             }
-                            log.info("Crushed {} candies with Timestamp: {}", nCrushes, e.getTimestamp());
+//                            log.info("Crushed {} candies with Timestamp: {}", nCrushes, e.getTimestamp());
                             return crushList.iterator();
                         }, getBeanEncoder(Crush.class));
     }
