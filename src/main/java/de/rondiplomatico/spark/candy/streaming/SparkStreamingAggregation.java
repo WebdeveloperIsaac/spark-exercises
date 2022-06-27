@@ -2,6 +2,7 @@ package de.rondiplomatico.spark.candy.streaming;
 
 import de.rondiplomatico.spark.candy.base.SparkBase;
 import de.rondiplomatico.spark.candy.base.data.Crush;
+import de.rondiplomatico.spark.candy.streaming.SparkStreamingBasics.CrushWithCity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -45,7 +46,7 @@ public class SparkStreamingAggregation extends SparkBase {
         // basics.e1_streamToConsole(simpleAggregationResult).awaitTermination();
 
         Dataset<Row> windowedAggregation = aggregation.exampleWindowedAggregation(withCityDataset, "city");
-         basics.e1_streamToConsole(windowedAggregation).awaitTermination();
+        basics.e1_streamToConsole(windowedAggregation).awaitTermination();
         //
         // Dataset<Row> windowedWithWatermarkAggregation = aggregation.exampleWindowedWithWatermarkAggregation(withCityDataset, "city");
         // basics.e1_streamToConsole(windowedWithWatermarkAggregation).awaitTermination();
@@ -77,9 +78,7 @@ public class SparkStreamingAggregation extends SparkBase {
     public Dataset<Row> exampleWindowedAggregation(Dataset<SparkStreamingBasics.CrushWithCity> crushDataset, String column) {
         return crushDataset
                            // transformation to add Timestamp in the correct format to Dataset
-                           .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndTimestamp>) e -> new CrushWithCityAndTimestamp(new Timestamp(e.getCrush()
-                                                                                                                                                               .getTime()
-                                           * 1000), e.getCrush(), e.getCity()),
+                           .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndTimestamp>) SparkStreamingAggregation::wrap,
                                 getBeanEncoder(CrushWithCityAndTimestamp.class))
                            // Grouping by given column and window
                            .groupBy(
@@ -98,9 +97,7 @@ public class SparkStreamingAggregation extends SparkBase {
     public Dataset<Row> exampleWindowedWithWatermarkAggregation(Dataset<SparkStreamingBasics.CrushWithCity> crushDataset, String column) {
         return crushDataset
                            // transformation to add Timestamp in the correct format to Dataset
-                           .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndTimestamp>) e -> new CrushWithCityAndTimestamp(new Timestamp(e.getCrush()
-                                                                                                                                                               .getTime()
-                                           * 1000), e.getCrush(), e.getCity()),
+                           .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndTimestamp>) SparkStreamingAggregation::wrap,
                                 getBeanEncoder(CrushWithCityAndTimestamp.class))
                            // Add Watermark to Dataset; based on timestamp column and a given watermark delay
                            // Events older than the watermark = (oldest timestamps of current micro batch - delay) are discarded
@@ -129,9 +126,7 @@ public class SparkStreamingAggregation extends SparkBase {
         final CustomTimeAggregation func = new CustomTimeAggregation();
         return crushDataset
                            // transformation to add Timestamp in the correct format to Dataset
-                           .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndTimestamp>) e -> new CrushWithCityAndTimestamp(new Timestamp(e.getCrush()
-                                                                                                                                                               .getTime()
-                                           * 1000), e.getCrush(), e.getCity()),
+                           .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndTimestamp>) SparkStreamingAggregation::wrap,
                                 getBeanEncoder(CrushWithCityAndTimestamp.class))
                            // Add Watermark to Dataset; based on timestamp column and a given watermark delay
                            // Events older than the watermark = (oldest timestamps of current micro batch - delay) are discarded
@@ -160,9 +155,7 @@ public class SparkStreamingAggregation extends SparkBase {
         final CustomCrushBasedAggregation func = new CustomCrushBasedAggregation();
         return crushDataset
                            // transformation to add Timestamp in the correct format to Dataset
-                           .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndTimestamp>) e -> new CrushWithCityAndTimestamp(new Timestamp(e.getCrush()
-                                                                                                                                                               .getTime()
-                                           * 1000), e.getCrush(), e.getCity()),
+                           .map((MapFunction<SparkStreamingBasics.CrushWithCity, CrushWithCityAndTimestamp>) SparkStreamingAggregation::wrap,
                                 getBeanEncoder(CrushWithCityAndTimestamp.class))
                            // Add Watermark to Dataset; based on timestamp column and a given watermark delay
                            // Events older than the watermark = (oldest timestamps of current micro batch - delay) are discarded
@@ -273,5 +266,11 @@ public class SparkStreamingAggregation extends SparkBase {
         private Timestamp ts;
         private Crush crush;
         private String city;
+    }
+
+    private static CrushWithCityAndTimestamp wrap(CrushWithCity c) {
+        return new CrushWithCityAndTimestamp(new Timestamp(c.getCrush()
+                                                            .getTime()
+                        * 1000), c.getCrush(), c.getCity());
     }
 }
