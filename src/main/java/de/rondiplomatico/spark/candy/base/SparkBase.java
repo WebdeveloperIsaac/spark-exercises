@@ -107,7 +107,7 @@ public class SparkBase {
                 output.append(value, lastIndex, m.start());
                 String envVar = System.getenv(m.group("variable"));
                 if (envVar == null) {
-                    log.error("Environment variable {} required for property {}, but is not set. Variable pattern: {}",
+                    log.warn("Environment variable {} required for property {}, but is not set. Variable pattern: {}",
                               m.group("variable"), t.getKey(),
                               variablePattern);
                 }

@@ -44,7 +44,7 @@ public class SparkPersistence extends SparkBase {
      */
     public static String getOutputDirectory() {
         // Without any scheme, the string will be interpreted relative to the current working directory using the default file system
-        return "localOut";
+        return "output/";
 
         /*
          * TODO: Use the following shema to change the output directory to an azure storage account
