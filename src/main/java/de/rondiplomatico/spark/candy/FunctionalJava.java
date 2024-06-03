@@ -1,18 +1,32 @@
 package de.rondiplomatico.spark.candy;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Random;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+//import java.util.random.RandomGenerator;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import java.awt.MultipleGradientPaint.ColorSpaceType;
+import java.time.*;
+import org.joda.time.LocalTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.rondiplomatico.spark.candy.base.Utils;
+import de.rondiplomatico.spark.candy.base.data.Candy;
+import de.rondiplomatico.spark.candy.base.data.Cities;
 import de.rondiplomatico.spark.candy.base.data.Color;
 import de.rondiplomatico.spark.candy.base.data.Crush;
 import de.rondiplomatico.spark.candy.base.data.Deco;
+//import jdk.internal.org.jline.utils.Colors;
+//import jdk.internal.org.jline.utils.Log;
 
 /**
  * Exercises for the first section of the course.
@@ -23,10 +37,23 @@ import de.rondiplomatico.spark.candy.base.data.Deco;
  * @author wirtzd
  *
  */
+interface GenerateCandy {
+	List<Candy> generate(int num);
+}
+
+interface GenerateRandomColor{
+	Color generateColor();
+}
+
+interface GenerateRandomDeco{
+	Deco generateDeco();
+}
 @SuppressWarnings("java:S100")
 public class FunctionalJava {
 
     private static final Logger log = LoggerFactory.getLogger(FunctionalJava.class);
+    
+	static Random rand = new Random();
 
     /**
      * Configure your environment to run this class for section 1.
@@ -37,22 +64,23 @@ public class FunctionalJava {
         /**
          * E1: Generate crushes
          */
-        // List<Crush> data = e1_crush(1000);
+         List<Crush> data = e1_crush(25000);
+         System.out.println(data.size());
 
         /**
          * E2: Filtering
          */
-        // e2_countCandies(data);
+         e2_countCandies(data);
 
         /**
          * E3: Grouping
          */
-        // e3_countByColor(data);
+         e3_countByColor(data);
 
         /**
          * E4: Lookups
          */
-        // e4_cityLookup(data);
+         e4_cityLookup(data);
     }
 
     /**
@@ -64,7 +92,7 @@ public class FunctionalJava {
      */
     public static List<Crush> e1_crush(int n) {
         List<Crush> orders = new ArrayList<>(n);
-
+        List<Candy> candies = createCandies(n);
         /*
          * TODO E1: Generate crushes
          *
@@ -73,8 +101,39 @@ public class FunctionalJava {
          *
          * Also log how many events have been generated with log4j at the end, using the "log" logger.
          */
-
-        return orders;
+        
+        for(int i =0;i<candies.size()-2;i++) {
+        	if(candies.get(i).getColor() == candies.get(i+1).getColor() && candies.get(i+2).getColor() == candies.get(i).getColor()) {
+        		Candy c = candies.get(i);
+        		orders.add(new Crush(c, Utils.randUser(), Utils.randTime()));
+        	}
+        }
+       log.info("Total Number of Horizantal Crushes are :" + orders.size());
+       return orders;
+    }
+    
+    public static List<Candy> createCandies(int numOfCandies) {
+     GenerateRandomColor clr = () -> {
+     	List<Color> colors = Arrays.asList(Color.values());
+     	int color = rand.nextInt(6);
+     	return colors.get(color);
+     };
+    	
+     GenerateRandomDeco deco = () -> {
+     	List<Deco> decorations = Arrays.asList(Deco.values());
+     	int decor = rand.nextInt(4);
+     	return decorations.get(decor);
+     };
+    	
+     GenerateCandy fn = (int num) -> {
+    	 List <Candy> candiesList = new ArrayList<Candy>();
+    	 for(int i =0;i<num;i++) {
+    		 candiesList.add(new Candy(clr.generateColor(),deco.generateDeco()));
+    	 }
+    	 return candiesList;
+     };  	 
+     	log.info("Generated :" + numOfCandies + " Candies");
+    	 return fn.generate(numOfCandies);
     }
 
     /**
@@ -114,7 +173,18 @@ public class FunctionalJava {
          *
          * Count how many wrapped candies have been crushed between 12-13 o'clock and log the results like above.
          */
+       long result =  data.stream()
+    		   			.filter((Crush c) -> {
+    		   				if((c.getTime().isAfter(java.time.LocalTime.parse("12:00:00"))) && (c.getTime().isBefore(java.time.LocalTime.parse("13:00:00")))) {
+    		   					return true;
+    		   				}
+    		   				return false;
+    		   			})
+    		   			.map(Crush::getCandy)
+    		   			.filter(c -> c.getDeco().equals(Deco.WRAPPED))
+    		   			.count();
        
+       log.info("The Wrapped Candies Crushed between 12-13 is : {}", result);
     }
 
     /**
@@ -128,16 +198,16 @@ public class FunctionalJava {
          * store the counts for each color.
          */
         Map<Color, Integer> res = new EnumMap<>(Color.class);
-        for (Crush c : data) {
-            Color col = c.getCandy().getColor();
-            Integer count = res.get(col);
-            if (count == null) {
-                res.put(col, 1);
-            } else {
-                res.put(col, count + 1);
-            }
-        }
-        res.forEach((c, i) -> log.info("The crush data contains {} {} candies", i, c));
+//        for (Crush c : data) {
+//            Color col = c.getCandy().getColor();
+//            Integer count = res.get(col);
+//            if (count == null) {
+//                res.put(col, 1);
+//            } else {
+//                res.put(col, count + 1);
+//            }
+//        }
+//        res.forEach((c, i) -> log.info("The crush data contains {} {} candies", i, c));
 
         /*
          * TODO E3: Grouping
@@ -147,15 +217,42 @@ public class FunctionalJava {
          *
          * Hints: The function "collect" with the "groupingBy" and downstream "counting" Collectors come in handy.
          */
-       
-
+        Color[] colors = Color.values();
+        for(int i =0;i<Color.values().length;i++) {
+        	res.put(colors[i], 0);
+        }
+        data.stream()
+        			.map(Crush :: getCandy)
+        			.map((Candy c)->{
+        				int val = res.get(c.getColor());
+        				val++;
+        				res.put(c.getColor(), val);
+        				return res;
+        			}).collect(Collectors.toList());
+        res.forEach((c, i) -> log.info("The crush data contains {} {} candies", i, c));
         /*
          * TODO E3: Grouping (Bonus question)
          *
          * Answer the question: "How many blue candies have been crushed per decoration type?"
          * Log your results.
          */
+        Map<Deco,Integer> bluePerDeco = new EnumMap<Deco, Integer>(Deco.class); 
+        Deco[] decorations = Deco.values();
+        for(int i =0;i<decorations.length;i++) {
+        	bluePerDeco.put(decorations[i],0);
+        }
+        
+        data.stream().map(Crush :: getCandy)
+        									.map((Candy c) -> {
+        										if(c.getColor().equals(Color.BLUE)) {
+        											int val = bluePerDeco.get(c.getDeco());
+        											val++;
+        											bluePerDeco.put(c.getDeco(), val);
+        										}
+        										return bluePerDeco;
+        									}).collect(Collectors.toList());
        
+       bluePerDeco.forEach((k,v) -> log.info("Total Blue Crushed for Decoration type {} is {}",k,v));
     }
 
     /**
@@ -168,19 +265,19 @@ public class FunctionalJava {
         /**
          * Get the map of cities from Utils
          */
-        Map<String, String> cities = Utils.getHomeCities();
+        Map<String, String> cities = Utils.homeCities;
 
         /**
          * Imperative implementation: How may crushes per city?
          */
-        Map<String, Integer> counts = new HashMap<>();
-        for (Crush c : data) {
-            // Look up the city using the user as key
-            String city = cities.get(c.getUser());
-            // The "getOrDefault" allows to formulate the counting code more compact - compare e3_countByColor :-)
-            counts.put(city, counts.getOrDefault(city, 0) + 1);
-        }
-        counts.forEach((c, i) -> log.info("There are {} crushes in {}", i, c));
+//        Map<String, Integer> counts = new HashMap<>();
+//        for (Crush c : data) {
+//            // Look up the city using the user as key
+//            String city = cities.get(c.getUser());
+//            // The "getOrDefault" allows to formulate the counting code more compact - compare e3_countByColor :-)
+//            counts.put(city, counts.getOrDefault(city, 0) + 1);
+//        }
+//        counts.forEach((c, i) -> log.info("There are {} crushes in {}", i, c));
 
         /*
          * TODO E4: Lookups
@@ -193,13 +290,33 @@ public class FunctionalJava {
          * Teach-In: Demonstrating the requirement of "effectively final" fields
          */
         // cities = null;
-
+        Map<String,Integer> crushesPerCity = new HashMap<>();
+        
+        data.stream().map((Crush c) -> {
+        	String city = cities.get(c.getUser());
+        	crushesPerCity.put(city, crushesPerCity.getOrDefault(city, 0) + 1);
+        	return crushesPerCity;
+        }).collect(Collectors.toList());
+        crushesPerCity.forEach((k,v) -> log.info("For the City {} totoal crushes recorded are {}",k,v));
+//        System.out.println(perCity);
         /*
          * TODO E4: Lookups (Bonus question)
          *
          * Implement "How many candies in Ismaning between 14-15 o'clock, counted by color?" with java streaming. Use what you have learned before to succeed.
          * Log your results.
          */
+        Map<Color, Integer> isamingCandies = new EnumMap<Color,Integer>(Color.class);
+        data.stream().map((Crush c) -> {
+        	String city = cities.get(c.getUser());
+        	if(city.equals("Ismaning") && c.getTime().isAfter(java.time.LocalTime.parse("14:00:00")) && c.getTime().isBefore(java.time.LocalTime.parse("15:00:00"))) {
+        		int val = isamingCandies.getOrDefault(c.getCandy().getColor(), 0+1);
+        		isamingCandies.put(c.getCandy().getColor(), val++);
+        	}
+        	return isamingCandies;
+        }).collect(Collectors.toList());
+        
+        isamingCandies.forEach((k,v) -> log.info("In ismaning during the time of 14 to 15 the color {} were crushed {} times",k,v));
+        
         
     }
 
