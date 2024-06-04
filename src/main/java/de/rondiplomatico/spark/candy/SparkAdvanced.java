@@ -454,9 +454,41 @@ public class SparkAdvanced extends SparkBase {
          * - The java spark context provides methods to create broadcasts.
          * - The Broadcast object can be used in transformations directly. Access it's payload with "value()"
          */
+        SparkBase sb = new SparkBase();
+        JavaSparkContext jsc = sb.getJavaSparkContext();
         
+         
+         Map<String,String> personsHomeTown = new HashMap<>();
+         Map<String,Integer> crushesInHomeTown = new HashMap<>();
+         
+         Map<String,String> randomCities = Utils.homeCities;
+         
+         Users[] usersList = Users.values();
+         
+         for(int i =0;i<usersList.length;i++) {
+        	 personsHomeTown.put(usersList[i].toString(), randomCities.get(usersList[i].toString()));
+        	 crushesInHomeTown.put(usersList[i].toString(),0);
+         }
+         
+         System.out.println("Persons Home town" + personsHomeTown);
+         
+         
+         Broadcast<List<Map<String, String>>> val = jsc.broadcast(Arrays.asList(personsHomeTown));
+         
+         Map<String, Integer> result = crushes.map((c) -> {
+        	 if(randomCities.get(c.getUser()) == personsHomeTown.get(c.getUser())) {
+        	 int count = crushesInHomeTown.get(c.getUser());
+        	 count+=1;
+        	 crushesInHomeTown.put(c.getUser(), count);
+        	 }
+        	 return crushesInHomeTown;
+         }).reduce((x,y) -> y);
         
+        result.forEach((x,y) -> {
+        	System.out.println("For the User " + x + " the Crushes Recorded are " + y + " at homeplace " + personsHomeTown.get(x));
+        });
         
     }
+
 
 }
