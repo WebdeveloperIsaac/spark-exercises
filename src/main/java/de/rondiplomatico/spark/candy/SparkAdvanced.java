@@ -1,13 +1,22 @@
 package de.rondiplomatico.spark.candy;
 
+import java.awt.MultipleGradientPaint.ColorSpaceType;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +27,12 @@ import com.google.common.collect.Lists;
 import de.rondiplomatico.spark.candy.base.SparkBase;
 import de.rondiplomatico.spark.candy.base.Timer;
 import de.rondiplomatico.spark.candy.base.Utils;
+import de.rondiplomatico.spark.candy.base.data.Candy;
 import de.rondiplomatico.spark.candy.base.data.Color;
 import de.rondiplomatico.spark.candy.base.data.Crush;
 import de.rondiplomatico.spark.candy.base.data.Deco;
+import de.rondiplomatico.spark.candy.base.data.Users;
+import lombok.val;
 import scala.Tuple2;
 
 /**
@@ -45,17 +57,18 @@ public class SparkAdvanced extends SparkBase {
 
         // Create a local instance
         SparkAdvanced sa = new SparkAdvanced();
-        int total = 12000000;
+//        int total = 1200000;
+        int total = 120000;
 
         /**
          * E1: Creating distributed crushes
          */
-        // JavaRDD<Crush> crushes = sa.e1_distributedCrushRDD(total / 150, 150);
+         JavaRDD<Crush> crushes = sa.e1_distributedCrushRDD(total / 150, 150);
 
         /**
          * E2: Averaging
          */
-        // sa.e2_averageCrushesPerMinute(crushes);
+//         sa.e2_averageCrushesPerMinute(crushes);
 
         /*
          * TODO E2: Averaging
@@ -76,7 +89,7 @@ public class SparkAdvanced extends SparkBase {
         /**
          * E3: Efficient averaging
          */
-        // sa.e3_averageCrushesPerMinuteEfficient(crushes);
+//         sa.e3_averageCrushesPerMinuteEfficient(crushes);
 
         /**
          * E4: Joins
@@ -90,6 +103,10 @@ public class SparkAdvanced extends SparkBase {
          * - Investigate the job, stage and task structure locally (localhost:4040)
          * - Note the times and maybe create a excel plot for time against number of partitions
          */
+         /**E5 
+          * 
+          */
+//         sa.e5_crushCompareWithAggregation(crushes);
 
         /*
          * TODO E6:
@@ -100,7 +117,7 @@ public class SparkAdvanced extends SparkBase {
          * - How many shuffles are happening with this implementation?
          * - What might be inefficient about this implementation?
          */
-        // sa.e6_lookupWithJoin(crushes);
+         sa.e6_lookupWithJoin(crushes);
 
         /**
          * E7: Broadcasts
@@ -139,9 +156,30 @@ public class SparkAdvanced extends SparkBase {
          * 
          * Hint: The function "flapMap" allows to return a collection of elements that are automatically combined by spark.
          */
-        JavaRDD<Crush> res = null;
-
+        SparkBase sb = new SparkBase();
+        JavaSparkContext sc = sb.getJavaSparkContext();
         
+        JavaRDD<Crush> res = null;
+        
+        List<List<Crush>> result = new ArrayList<>();
+        List<Integer> numList = new ArrayList<Integer>();
+        
+        for(int i=1;i<n;i++) {
+        	numList.add(i);
+        	result.add(FunctionalJava.e1_crush(i));
+        }        
+        List<Crush> toConvert = new ArrayList<Crush>();
+        
+        Stream<Crush> results = result.stream().flatMap(
+        (List <Crush> x) -> {
+        	return x.stream();
+        });
+        
+        results.forEach((x) -> {
+        	toConvert.add(x);
+        });
+        
+        res = sc.parallelize(toConvert);
 
         /*
          * Additional helper code to facilitate fair comparison of runtimes in later examples - explained later.
@@ -201,6 +239,7 @@ public class SparkAdvanced extends SparkBase {
     public void e3_averageCrushesPerMinuteEfficient(final JavaRDD<Crush> crushes) {
         // Measure the start time
         Timer t = Timer.start();
+        
 
         /*
          * TODO E3: Efficient averaging
@@ -220,6 +259,29 @@ public class SparkAdvanced extends SparkBase {
          * 
          * Bonus task: Add the efficient implementation to your partitioning experiment code from the last exercise and see the speedup!
          */
+        // Initialize initial values for aggregation
+        Tuple2<Integer, Integer> initial = new Tuple2<>(0, 0);
+
+        // Perform aggregation using aggregateByKey
+        Tuple2<Integer, Integer> result = crushes.filter(c -> c.getCandy().getColor() == Color.BLUE)
+                .mapToPair(c -> new Tuple2<>(c.getTime(), 1))
+                .aggregateByKey(initial, 
+                		(acc, v) -> new Tuple2<>(acc._1 + 1, acc._2 + v), //sequence adding into tuples
+                		(acc1, acc2) -> new Tuple2<>(acc1._1 + acc2._1, acc1._2 + acc2._2)) //combing them 
+                .map(tuple -> tuple._2)
+                .reduce((a, b) -> new Tuple2<>(a._1 + b._1, a._2 + b._2));
+
+        // Compute the average per minute
+        double average = result._2 / (double) result._1;
+
+
+        log.info("Average Candy crushes per Minute: {}, computed in {}ms. {} crushes in {} partitions", average,
+                t.elapsedMS(), crushes.count(), crushes.getNumPartitions());
+        
+        		
+        
+        
+        		
        
 
     }
@@ -286,7 +348,49 @@ public class SparkAdvanced extends SparkBase {
          * Add the efficient implementation to your partitioning experiment code from the last exercise and compare the speedup!
          * You can investigate the job, stage and task structure locally (localhost:4040)
          */
-      
+        long num = crushes.filter(c -> c.getCandy().getDeco() == Deco.HSTRIPES).count();
+        System.out.println("The Number of Horizantal Crushes are " + num);
+        
+        Map<String,Integer> hcrushCounts = new HashMap<String,Integer>();
+        Map<String,Integer> wcrushCounts = new HashMap<String,Integer>();
+        Users[] users = Users.values();
+        for(int i=0;i<Users.values().length;i++) {
+        	hcrushCounts.put(users[i].toString(), 0);
+        	wcrushCounts.put(users[i].toString(), 0);
+        }
+//        System.out.println(hcrushCounts);
+        Map<String, Integer> hStripresult = crushes.filter(c -> c.getCandy().getDeco()==Deco.HSTRIPES)
+        		.mapToPair(c -> new Tuple2<>(c.getUser(),0))
+        				.map(c -> {
+        					int count = hcrushCounts.get(c._1);
+        					count +=1;
+        					hcrushCounts.put(c._1, count);
+        					return hcrushCounts;
+        				}).reduce((x,y) -> y);
+        
+        Map<String, Integer> wrapresult = crushes.filter(c -> c.getCandy().getDeco()==Deco.WRAPPED)
+        		.mapToPair(c -> new Tuple2<>(c.getUser(),0))
+        				.map(c -> {
+        					int count = wcrushCounts.get(c._1);
+        					count +=1;
+        					wcrushCounts.put(c._1, count);
+        					return wcrushCounts;
+        				}).reduce((x,y) -> y);
+        
+        Map<String, Integer> finalResult = new HashMap<>();
+        
+        for(int i=0;i<users.length;i++) {
+        	if(hStripresult.get(users[i].toString()) > wrapresult.get(users[i].toString())) {
+        		finalResult.put(users[i].toString() + "| Horizantal |" , hStripresult.get(users[i].toString()));
+        	}
+        	else {
+        		finalResult.put(users[i].toString() + "| Wrapped | " , wrapresult.get(users[i].toString()));
+        	}
+        }
+        
+        finalResult.forEach((x,y) -> {
+        	System.out.println("For the User" + x + "Crushes " + y );
+        });
     }
 
     /**
@@ -350,6 +454,8 @@ public class SparkAdvanced extends SparkBase {
          * - The java spark context provides methods to create broadcasts.
          * - The Broadcast object can be used in transformations directly. Access it's payload with "value()"
          */
+        
+        
         
     }
 
