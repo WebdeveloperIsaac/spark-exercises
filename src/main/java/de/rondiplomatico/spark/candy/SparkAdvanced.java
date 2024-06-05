@@ -457,26 +457,25 @@ public class SparkAdvanced extends SparkBase {
         SparkBase sb = new SparkBase();
         JavaSparkContext jsc = sb.getJavaSparkContext();
         
+        final Broadcast<Users[]> usersBroadcast = jsc.broadcast(Users.values());
          
          Map<String,String> personsHomeTown = new HashMap<>();
          Map<String,Integer> crushesInHomeTown = new HashMap<>();
          
          Map<String,String> randomCities = Utils.homeCities;
          
-         Users[] usersList = Users.values();
          
-         for(int i =0;i<usersList.length;i++) {
-        	 personsHomeTown.put(usersList[i].toString(), randomCities.get(usersList[i].toString()));
-        	 crushesInHomeTown.put(usersList[i].toString(),0);
+         for(int i =0;i<usersBroadcast.value().length;i++) {
+        	 personsHomeTown.put(usersBroadcast.value()[i].toString(), randomCities.get(usersBroadcast.value()[i].toString()));
+        	 crushesInHomeTown.put(usersBroadcast.value()[i].toString(),0);
          }
          
          System.out.println("Persons Home town" + personsHomeTown);
          
-         
-         Broadcast<List<Map<String, String>>> val = jsc.broadcast(Arrays.asList(personsHomeTown));
+         final Broadcast<Map<String,String>> personsHomeTownBroadcast = jsc.broadcast(personsHomeTown);
          
          Map<String, Integer> result = crushes.map((c) -> {
-        	 if(randomCities.get(c.getUser()) == personsHomeTown.get(c.getUser())) {
+        	 if(randomCities.get(c.getUser()).toString().equals(personsHomeTownBroadcast.value().get(c.getUser()))) {
         	 int count = crushesInHomeTown.get(c.getUser());
         	 count+=1;
         	 crushesInHomeTown.put(c.getUser(), count);
@@ -487,6 +486,7 @@ public class SparkAdvanced extends SparkBase {
         result.forEach((x,y) -> {
         	System.out.println("For the User " + x + " the Crushes Recorded are " + y + " at homeplace " + personsHomeTown.get(x));
         });
+
         
     }
 
