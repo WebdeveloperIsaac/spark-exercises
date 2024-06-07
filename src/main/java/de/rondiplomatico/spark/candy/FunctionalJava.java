@@ -93,6 +93,8 @@ public class FunctionalJava {
     public static List<Crush> e1_crush(int n) {
         List<Crush> orders = new ArrayList<>(n);
         List<Candy> candies = createCandies(n);
+        orders = generateRealGameCrushes(candies);
+//        orders.stream().forEach(System.out::println);
         /*
          * TODO E1: Generate crushes
          *
@@ -101,15 +103,58 @@ public class FunctionalJava {
          *
          * Also log how many events have been generated with log4j at the end, using the "log" logger.
          */
-        
-        for(int i =0;i<candies.size()-2;i++) {
-        	if(candies.get(i).getColor() == candies.get(i+1).getColor() && candies.get(i+2).getColor() == candies.get(i).getColor()) {
-        		Candy c = candies.get(i);
-        		orders.add(new Crush(c, Utils.randUser(), Utils.randTime()));
-        	}
-        }
-       log.info("Total Number of Horizantal Crushes are :" + orders.size());
+       log.info("Total Number of Horizantal & Vertical Crushes are :" + orders.size());
        return orders;
+    }
+    
+    public static List<Crush> generateRealGameCrushes(List<Candy> candies) {
+    	int len = candies.size();
+    	int n = findmn(len);
+    	if(n==0) {
+    		n = findNextNearestPerfectSquare(len);
+    	}
+    	Candy [][] gametiles = new Candy[n][n];
+    	int candy =0;
+    	//i am trying to add like in the 2d matrix all the candy objects
+    	for(int i=0;i< gametiles.length;i++) {
+    		for(int j=0;j< gametiles.length;j++) {
+    			gametiles[i][j]= candies.get(i);
+    			candy++;
+    		}
+    	}
+    	
+    	List<Crush> crushesGenerated = new ArrayList<Crush>();
+    	
+    	//here i will make a new crush object if 3 horizantal are same or like vertical are same
+    	for(int i=0;i< gametiles.length-2;i++) {
+    		for(int j=0;j< gametiles.length-2;j++) {
+    			if(gametiles[i][j].getColor() == gametiles[i][j+1].getColor() && gametiles[i][j].getColor() == gametiles[i][j+2].getColor() //horizantal crush
+    			|| gametiles[i][j].getColor() == gametiles[i+1][j].getColor() && gametiles[i][j].getColor() == gametiles[i+2][j].getColor()	//vertiiccal crush
+    					) {
+    				Candy c = gametiles[i][j];
+    				crushesGenerated.add(new Crush(c, Utils.randUser(), Utils.randTime()));
+    			}
+    		}
+    	}
+    	return crushesGenerated;
+    }
+    // this method to try & find if our length is a square number
+    public static int findmn(int len) {
+    	for(int i =0;i<len;i++) {
+    		if(i*i ==len) {
+    			return i;
+    		}
+    	}
+    	return 0;
+    }
+    
+    //if the length is not we'll take the next nearest number for the matrix n value
+    public static int findNextNearestPerfectSquare(int len) {
+    	for(int i=0; ;i++) {
+    		if(i*i>len && (i*i)%2 ==0) {
+    			return i;
+    		}
+    	}
     }
     
     public static List<Candy> createCandies(int numOfCandies) {
@@ -309,8 +354,9 @@ public class FunctionalJava {
         data.stream().map((Crush c) -> {
         	String city = cities.get(c.getUser());
         	if(city.equals("Ismaning") && c.getTime().isAfter(java.time.LocalTime.parse("14:00:00")) && c.getTime().isBefore(java.time.LocalTime.parse("15:00:00"))) {
-        		int val = isamingCandies.getOrDefault(c.getCandy().getColor(), 0+1);
-        		isamingCandies.put(c.getCandy().getColor(), val++);
+        		int val = isamingCandies.getOrDefault(c.getCandy().getColor(), 0);
+        		val++;
+        		isamingCandies.put(c.getCandy().getColor(), val);
         	}
         	return isamingCandies;
         }).collect(Collectors.toList());
